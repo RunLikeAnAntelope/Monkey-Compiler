@@ -11,19 +11,31 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # put cmake stuff in bin directory
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 # compile flags
-set (CMAKE_CXX_FLAGS "-Wall -Wextra -pedantic -g -std=c++20")
+set (CMAKE_CXX_FLAGS "-Wall -Wextra -Weffc++ -Wextra -Wconversion -Wsign-conversion -pedantic-errors -g -std=c++20")
 # inlude threading for gtest
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 find_package(Threads REQUIRED)
 # Locate GTest
 find_package(GTest REQUIRED)
-include_directories(${GTEST_INCLUDE_DIRS} src)
+include_directories(${GTEST_INCLUDE_DIRS} src test)
 
 # set sources
 set(SOURCES 
-    "src/token.hpp" 
+    "src/token.hpp"
+    "src/token.cpp"
+    "src/lexer.hpp"
+    "src/lexer.cpp"
+    "src/repl.hpp"
+    "src/repl.cpp"
+    "src/ast.hpp"
+    "src/ast.cpp"
 )
+
+
 # Link runTests with what we want to test and the GTest and pthread library
-add_executable(Lexer src/main.cpp )
-target_link_libraries(Lexer ${GTEST_LIBRARIES} Threads::Threads)
+add_executable(Test ${SOURCES} test/tests.cpp)
+target_link_libraries(Test ${GTEST_LIBRARIES} Threads::Threads)
+
+# Make repl/main
+add_executable(Repl ${SOURCES} src/main.cpp)
