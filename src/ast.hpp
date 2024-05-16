@@ -7,7 +7,7 @@ namespace Ast {
 
 struct INode {
     virtual ~INode() = default;
-    virtual std::string TokenLiteral()= 0;
+    virtual std::string TokenLiteral() = 0;
 };
 
 struct IStatement : public INode {
@@ -21,28 +21,32 @@ struct IExpression : public INode {
 };
 
 struct Program : public INode{
-    Program(std::vector<IStatement*> statements);
-    ~Program() = default;
+    //Program(std::vector<IStatement*> statements);
 
     std::vector<IStatement*> m_statements;
     std::string TokenLiteral() override;
 };
 
-struct Identifier {
+// the x in "let x = 5;". also the x in "let a = x;:"
+struct Identifier : public IExpression{
     Token::Token m_token;
     std::string m_value;
+
+    Identifier(Token::Token token, std::string value);
+    std::string TokenLiteral() override;
+    void expressionNode() override {};
 };
 
 
-struct LetStatement : IStatement{
-    LetStatement(){};
-    ~LetStatement(){};
-
+struct LetStatement : public IStatement{
     Token::Token m_token;
-    Identifier Name;
+    Identifier* m_name;
     IExpression* m_expression;
 
+    LetStatement(Token::Token token);
+
     std::string TokenLiteral() override;
+    void statementNode() override {};
 
 };
 

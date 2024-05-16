@@ -11,7 +11,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # put cmake stuff in bin directory
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 # compile flags
-set (CMAKE_CXX_FLAGS "-Wall -Wextra -Weffc++ -Wextra -Wconversion -Wsign-conversion -pedantic-errors -g -std=c++20")
+set (CMAKE_CXX_FLAGS "-Wall -Wextra -Wextra -Wconversion -Wsign-conversion -pedantic-errors -g -std=c++20")
 # inlude threading for gtest
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
@@ -30,6 +30,8 @@ set(SOURCES
     "src/repl.cpp"
     "src/ast.hpp"
     "src/ast.cpp"
+    "src/parser.hpp"
+    "src/parser.cpp"
 )
 
 

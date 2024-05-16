@@ -2,7 +2,7 @@
 
 namespace Ast {
 
-Program::Program(std::vector<IStatement*> statements):m_statements(statements){}
+//Program::Program(std::vector<IStatement*> statements):m_statements(statements){}
 
 std::string Program::TokenLiteral(){
     if(m_statements.size() > 0){
@@ -12,9 +12,21 @@ std::string Program::TokenLiteral(){
     }
 }
 
+// Identifier stuff
+
+Identifier::Identifier(Token::Token token, std::string value):m_token(token), m_value(value){};
+std::string Identifier::TokenLiteral() {
+    return m_token.Literal;
+}
+
+// LetStatement stuff
+LetStatement::LetStatement(Token::Token token):m_token(token){};
+
 std::string LetStatement::TokenLiteral(){
     return m_token.Literal;
 }
+
+
 
 
 } // namespace Ast

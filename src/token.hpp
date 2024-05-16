@@ -4,9 +4,9 @@
 namespace Token {
 
 
-typedef std::string TokenType;
+//typedef std::string TokenType;
 
-//enum TokenType {ILLEGAL, EOF_, IDENT, INT, ASSIGN, PLUS, COMMA, SEMICOLON, LPAREN, RPAREN, LBRACE, RBRACE, FUNCTION, LET};
+enum TokenType {ILLEGAL, EOF_, IDENT, INT, ASSIGN, PLUS, MINUS, BANG, ASTERISK, SLASH, LT, GT, EQ, NOT_EQ, COMMA, SEMICOLON, LPAREN, RPAREN, LBRACE, RBRACE, FUNCTION, LET, TRUE, FALSE, IF, ELSE, RETURN};
 
 
 
@@ -15,8 +15,45 @@ struct Token {
     std::string Literal;
 };
 
-TokenType LookupIdent(std::string ident);
+const std::unordered_map<std::string, TokenType> tokenMap = {
+    {"ILLEGAL", ILLEGAL},
+    {"EOF", EOF_},
 
+    // identifiers + literals
+    {"IDENT", IDENT},
+    {"INT", INT},
+
+    // Operators
+    {"=", ASSIGN},
+    {"+", PLUS},
+    {"-", MINUS},
+    {"!", BANG},
+    {"*", ASTERISK},
+    {"/", SLASH},
+    {"<", LT},
+    {">", GT},
+    {"=", EQ},
+    {"!=", NOT_EQ},
+
+    // delimiters
+    {",", COMMA},
+    {";", SEMICOLON},
+    {"(", LPAREN},
+    {")", RPAREN},
+    {"{", LBRACE},
+    {"}", RBRACE},
+    
+    // Keywords
+    {"FUNCTION", FUNCTION},
+    {"LET", LET},
+    {"TRUE", TRUE},
+    {"FALSE", FALSE},
+    {"IF", IF},
+    {"ELSE", ELSE},
+    {"RETURN", RETURN}
+};
+
+/*
 const TokenType ILLEGAL = "ILLEGAL";
 const TokenType EOF_ = "EOF";
 
@@ -52,7 +89,7 @@ const TokenType FALSE = "FALSE";
 const TokenType IF = "IF";
 const TokenType ELSE = "ELSE";
 const TokenType RETURN = "RETURN";
-
+*/
 const std::unordered_map<std::string, TokenType> keywords = {
     {"fn", FUNCTION},
     {"let", LET},
@@ -62,4 +99,8 @@ const std::unordered_map<std::string, TokenType> keywords = {
     {"else", ELSE},
     {"return", RETURN}
 };
+
+TokenType LookupIdent(std::string ident);
+
+
 } // namespace Token

@@ -1,7 +1,10 @@
 // tests.cpp
 #include <gtest/gtest.h>
-#include <token.hpp>
-#include <lexer.hpp>
+#include "token.hpp"
+#include "lexer.hpp"
+#include "ast.hpp"
+#include <parser.hpp>
+
 
 TEST(TestNextToken, Works) {
     struct Test {
@@ -117,6 +120,42 @@ TEST(TestNextToken, Works) {
             << test.expectedToken << ", got=" << tok.Type;
         i++;
     }
+}
+
+void testLetStatement(Ast::IStatement* s, std::string name){
+    ASSERT_EQ(s->TokenLiteral(), "let");
+    Ast::LetStatement* letStmt = dynamic_cast<Ast::LetStatement*>(s); // should get an exception if this fails
+
+    ASSERT_EQ(letStmt->m_name->m_value, name);
+    ASSERT_EQ(letStmt->m_name->TokenLiteral(), name);
+}
+TEST(TestParser, Works){
+    std::string input = 
+        "let x = 5;\n"
+        "let y = 10;\n"
+        "let foobar = 838383;\n";
+
+    struct test {
+        std::string expectedIdentier;
+    };
+
+    std::vector<test> tests = {
+        {"x"},
+        {"y"},
+        {"foobar"}
+    };
+
+    Lexer::Lexer l(input);
+    Parser::Parser p(l);
+    Ast::Program* program = p.ParseProgram();
+    ASSERT_FALSE(program == nullptr) << "ParseProgram() returned a nullptr";
+
+    for(unsigned int i = 0; auto test : tests){
+        Ast::IStatement* stmt = program->m_statements[i];
+        testLetStatement(stmt, test.expectedIdentier);
+        i++; 
+    }
+
 }
 
 int main(int argc, char **argv) {
