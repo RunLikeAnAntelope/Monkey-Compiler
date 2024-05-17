@@ -1,3 +1,4 @@
+#include <memory>
 #include "ast.hpp"
 #include "lexer.hpp"
 #include "token.hpp"
@@ -16,8 +17,8 @@ struct Parser {
 
     Ast::Program ParseProgram();
 
-    Ast::IStatement* parseStatement();
-    Ast::LetStatement* parseLetStatement();
+    std::unique_ptr<Ast::IStatement> parseStatement();
+    std::unique_ptr<Ast::LetStatement> parseLetStatement();
 
     bool curTokenIs(Token::TokenType t);
     bool peekTokenIs(Token::TokenType t);

@@ -1,6 +1,7 @@
 #pragma once
 #include "token.hpp"
 #include <string>
+#include <memory>
 #include <vector>
 
 namespace Ast {
@@ -23,7 +24,7 @@ struct IExpression : public INode {
 struct Program : public INode{
     //Program(std::vector<IStatement*> statements);
 
-    std::vector<IStatement*> m_statements;
+    std::vector<std::unique_ptr<IStatement>> m_statements;
     std::string TokenLiteral() override;
 };
 

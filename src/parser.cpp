@@ -1,6 +1,7 @@
 #include "parser.hpp"
 #include "ast.hpp"
 #include "token.hpp"
+#include <memory>
 namespace Parser {
 
 
@@ -16,11 +17,10 @@ void Parser::nextToken() {
 
 Ast::Program Parser::ParseProgram(){
     Ast::Program program;
-    program.m_statements = {};
     while(m_curToken.Type != Token::EOF_){
-        Ast::IStatement* stmt = parseStatement();
+        std::unique_ptr<Ast::IStatement> stmt = parseStatement();
         if(stmt != nullptr){
-            program.m_statements.push_back(stmt);
+            program.m_statements.push_back(std::move(stmt));
         }
         nextToken();
     }
@@ -28,7 +28,7 @@ Ast::Program Parser::ParseProgram(){
     return program;
 }
 
-Ast::IStatement* Parser::parseStatement(){
+std::unique_ptr<Ast::IStatement> Parser::parseStatement(){
     switch (m_curToken.Type) {
         case Token::LET:
             return parseLetStatement();
@@ -38,8 +38,8 @@ Ast::IStatement* Parser::parseStatement(){
     }
 }
 
-Ast::LetStatement* Parser::parseLetStatement(){
-    Ast::LetStatement* stmt = new Ast::LetStatement(m_curToken);
+std::unique_ptr<Ast::LetStatement> Parser::parseLetStatement(){
+    auto stmt = std::make_unique<Ast::LetStatement>(m_curToken);
     if (!expectPeek(Token::IDENT)){
         return nullptr;
     }
@@ -49,7 +49,7 @@ Ast::LetStatement* Parser::parseLetStatement(){
         return nullptr;
     }
 
-    while(!curTokenIs(Token::SEMICOLON)){
+   while(!curTokenIs(Token::SEMICOLON)){
         nextToken();
     }
     
