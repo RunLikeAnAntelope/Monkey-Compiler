@@ -14,13 +14,13 @@ void Parser::nextToken() {
     m_peekToken = m_l.NextToken();
 }
 
-Ast::Program* Parser::ParseProgram(){
-    Ast::Program* program = new Ast::Program();
-    program->m_statements = {};
+Ast::Program Parser::ParseProgram(){
+    Ast::Program program;
+    program.m_statements = {};
     while(m_curToken.Type != Token::EOF_){
         Ast::IStatement* stmt = parseStatement();
         if(stmt != nullptr){
-            program->m_statements.push_back(stmt);
+            program.m_statements.push_back(stmt);
         }
         nextToken();
     }

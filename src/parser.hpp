@@ -14,7 +14,7 @@ struct Parser {
 
     void nextToken();
 
-    Ast::Program* ParseProgram();
+    Ast::Program ParseProgram();
 
     Ast::IStatement* parseStatement();
     Ast::LetStatement* parseLetStatement();
