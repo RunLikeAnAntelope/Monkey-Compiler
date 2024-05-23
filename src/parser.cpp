@@ -8,6 +8,10 @@ namespace Parser {
 Parser::Parser(Lexer::Lexer& lexer):m_l(lexer) {
     nextToken();
     nextToken();
+    registerPrefix(Token::IDENT, &Parser::parseIdentifier);
+    registerPrefix(Token::INT, &Parser::parseIntegerLiteral);
+    registerPrefix(Token::BANG, &Parser::parsePrefixExpression);
+    registerPrefix(Token::MINUS, &Parser::parsePrefixExpression);
 }
 
 void Parser::nextToken() {
@@ -33,8 +37,10 @@ std::unique_ptr<Ast::IStatement> Parser::parseStatement(){
         case Token::LET:
             return parseLetStatement();
             break;
+        case Token::RETURN:
+            return parseReturnStatement();
         default:
-            return nullptr;
+            return parseExpressionStatement();
     }
 }
 
@@ -44,7 +50,7 @@ std::unique_ptr<Ast::LetStatement> Parser::parseLetStatement(){
         return nullptr;
     }
 
-    stmt->m_name = new Ast::Identifier(m_curToken, m_curToken.Literal);
+    stmt->m_name = std::make_unique<Ast::Identifier>(m_curToken, m_curToken.Literal);
     if(!expectPeek(Token::ASSIGN)) {
         return nullptr;
     }
@@ -54,6 +60,74 @@ std::unique_ptr<Ast::LetStatement> Parser::parseLetStatement(){
     }
     
     return stmt;
+}
+
+
+std::unique_ptr<Ast::ReturnStatement> Parser::parseReturnStatement(){
+    auto stmt = std::make_unique<Ast::ReturnStatement>(m_curToken);
+    nextToken();
+    while(!curTokenIs(Token::SEMICOLON)){
+        nextToken();
+    }
+
+    return stmt;
+}
+
+std::unique_ptr<Ast::ExpressionStatement> Parser::parseExpressionStatement(){
+    auto stmt = std::make_unique<Ast::ExpressionStatement>(m_curToken);
+    stmt->m_expression = parseExpression(LOWEST);
+    if(peekTokenIs(Token::SEMICOLON)){
+        nextToken();
+    }
+    return stmt;
+}
+
+
+std::unique_ptr<Ast::IExpression> Parser::parseExpression(Precedence precedence){
+    prefixParseFn prefix = m_prefixParseFns[m_curToken.Type];
+    if(prefix == nullptr){
+        noPrefixParseFnError(m_curToken.Type);
+        return nullptr;
+    }
+
+    auto leftExp = (this->*prefix)();
+    return leftExp;
+}
+
+
+std::unique_ptr<Ast::IExpression> Parser::parseIdentifier(){
+    auto ident = std::make_unique<Ast::Identifier>(m_curToken, m_curToken.Literal);
+    return ident;
+}
+
+std::unique_ptr<Ast::IExpression> Parser::parseIntegerLiteral(){
+    auto lit = std::make_unique<Ast::IntegerLiteral>(m_curToken);
+    try {
+        long int value = stoi(m_curToken.Literal);
+        lit->m_value = value;
+    } catch(const std::invalid_argument& ia){
+        std::string msg = "could not parse " + m_curToken.Literal + "as integer";
+        m_errors.push_back(msg);
+        return nullptr;
+    }
+
+    return lit;
+}
+
+std::unique_ptr<Ast::IExpression> Parser::parsePrefixExpression(){
+    auto expression = std::make_unique<Ast::PrefixExpression>(m_curToken, m_curToken.Literal);
+    nextToken();
+    expression->m_right = parseExpression(PREFIX);
+    return expression;
+}
+
+
+void Parser::registerPrefix(Token::TokenType tokenType, prefixParseFn fn){
+    m_prefixParseFns[tokenType] = fn;
+}
+
+void Parser::registerInfix(Token::TokenType tokenType, infixParseFn fn){
+    m_infixParseFns[tokenType] = fn;
 }
 
 bool Parser::curTokenIs(Token::TokenType t){
@@ -69,11 +143,25 @@ bool Parser::expectPeek(Token::TokenType t){
         nextToken();
         return true;
     } else {
+        peekError(t);
         return false;
     }
 }
 
+std::vector<std::string> Parser::Errors(){
+    return m_errors;
+}
 
+
+void Parser::peekError(Token::TokenType t){
+    std::string msg = "Expect next token to be " + Token::tokenStringMap.at(t) + ", got " + Token::tokenStringMap.at(m_peekToken.Type) + " instead";
+    m_errors.push_back(msg);
+}
+
+void Parser::noPrefixParseFnError(Token::TokenType t) {
+    std::string msg = "no prefix parse function for " + Token::tokenStringMap.at(t) + " found";
+    m_errors.push_back(msg);
+}
 
 
 } //namespace Parser

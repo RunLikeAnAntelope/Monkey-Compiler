@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <vector>
 #include <unordered_map>
 namespace Token {
 
@@ -15,7 +16,12 @@ struct Token {
     std::string Literal;
 };
 
-const std::unordered_map<std::string, TokenType> tokenMap = {
+struct StringTok {
+    std::string Str;
+    TokenType Type;
+};
+
+const std::vector<StringTok> strToTok = {
     {"ILLEGAL", ILLEGAL},
     {"EOF", EOF_},
 
@@ -51,7 +57,51 @@ const std::unordered_map<std::string, TokenType> tokenMap = {
     {"IF", IF},
     {"ELSE", ELSE},
     {"RETURN", RETURN}
+
 };
+
+std::unordered_map<std::string, TokenType> vecToTokenMap();
+std::unordered_map<TokenType, std::string> vecToTokenStringMap();
+
+const std::unordered_map<std::string, TokenType> tokenMap = vecToTokenMap();
+const std::unordered_map<TokenType, std::string> tokenStringMap = vecToTokenStringMap(); 
+//     {"ILLEGAL", ILLEGAL},
+//     {"EOF", EOF_},
+//
+//     // identifiers + literals
+//     {"IDENT", IDENT},
+//     {"INT", INT},
+//
+//     // Operators
+//     {"=", ASSIGN},
+//     {"+", PLUS},
+//     {"-", MINUS},
+//     {"!", BANG},
+//     {"*", ASTERISK},
+//     {"/", SLASH},
+//     {"<", LT},
+//     {">", GT},
+//     {"=", EQ},
+//     {"!=", NOT_EQ},
+//
+//     // delimiters
+//     {",", COMMA},
+//     {";", SEMICOLON},
+//     {"(", LPAREN},
+//     {")", RPAREN},
+//     {"{", LBRACE},
+//     {"}", RBRACE},
+//     
+//     // Keywords
+//     {"FUNCTION", FUNCTION},
+//     {"LET", LET},
+//     {"TRUE", TRUE},
+//     {"FALSE", FALSE},
+//     {"IF", IF},
+//     {"ELSE", ELSE},
+//     {"RETURN", RETURN}
+// };
+
 
 /*
 const TokenType ILLEGAL = "ILLEGAL";

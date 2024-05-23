@@ -1,4 +1,3 @@
-// tests.cpp
 #include "ast.hpp"
 #include "lexer.hpp"
 #include "token.hpp"
@@ -87,42 +86,4 @@ TEST(TestNextToken, Works) {
   }
 }
 
-void testLetStatement(std::unique_ptr<Ast::IStatement>& s, std::string name) {
-  Ast::IStatement* stmt = s.get();
-  Ast::LetStatement* letStmt = dynamic_cast<Ast::LetStatement*>(stmt);
-  if(letStmt != nullptr){
-      ASSERT_EQ(s->TokenLiteral(), "let");
-      ASSERT_EQ(letStmt->m_name->m_value, name);
-      ASSERT_EQ(letStmt->m_name->TokenLiteral(), name);
-  } else {
-    ASSERT_TRUE(false) << "nullptr into testLetStatement";
-  }
-}
 
-TEST(TestParser, Works) {
-  std::string input = "let x = 5;\n"
-                      "let y = 10;\n"
-                      "let foobar = 838383;\n";
-
-  struct test {
-    std::string expectedIdentier;
-  };
-
-  std::vector<test> tests = {{"x"}, {"y"}, {"foobar"}};
-
-  Lexer::Lexer l(input);
-  Parser::Parser p(l);
-  Ast::Program program = p.ParseProgram();
-  // Doesn't work as program no longer is a pointer
-  // ASSERT_FALSE(program == nullptr) << "ParseProgram() returned a nullptr";
-
-  for (unsigned int i = 0; auto test : tests) {
-    testLetStatement(program.m_statements[i], test.expectedIdentier);
-    i++;
-  }
-}
-
-int main(int argc, char **argv) {
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}

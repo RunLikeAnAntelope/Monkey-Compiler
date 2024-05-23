@@ -34,9 +34,15 @@ set(SOURCES
     "src/parser.cpp"
 )
 
+set(TESTS
+    "test/ast_test.cpp"
+    "test/tests.cpp"
+    "test/parser_test.cpp"
+)
+
 
 # Link runTests with what we want to test and the GTest and pthread library
-add_executable(Test ${SOURCES} test/tests.cpp)
+add_executable(Test ${SOURCES} ${TESTS} test/all_tests.cpp)
 target_link_libraries(Test ${GTEST_LIBRARIES} Threads::Threads)
 
 # Make repl/main
