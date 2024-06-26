@@ -41,6 +41,7 @@ std::string IntegerLiteral::TokenLiteral(){
 
 // PrefixExpression stuff
 PrefixExpression::PrefixExpression(Token::Token t, std::string op):m_token(t), m_op(op){}
+
 std::string PrefixExpression::TokenLiteral() {
     return m_token.Literal;
 }
@@ -54,6 +55,21 @@ std::string PrefixExpression::String() {
     return out;
 }
 
+//InfixExpression stuff
+InfixExpression::InfixExpression(Token::Token t, std::unique_ptr<IExpression> left, std::string op):m_token(t), m_left(std::move(left)), m_op(op){}
+std::string InfixExpression::TokenLiteral() {
+    return m_token.Literal;
+}
+
+std::string InfixExpression::String(){
+    std::string out;
+    out.append("(");
+    out.append(m_left->String());
+    out.append(" " + m_op + " ");
+    out.append(m_right->String());
+    out.append(")");
+    return out;
+}
 // LetStatement stuff
 LetStatement::LetStatement(Token::Token token):m_token(token){};
 

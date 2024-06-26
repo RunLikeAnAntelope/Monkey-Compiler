@@ -62,6 +62,18 @@ struct PrefixExpression : public IExpression {
     std::string String() override;
 };
 
+struct InfixExpression : public IExpression {
+    Token::Token m_token;
+    std::unique_ptr<IExpression> m_left;
+    std::string m_op;
+    std::unique_ptr<IExpression> m_right;
+
+    InfixExpression(Token::Token t, std::unique_ptr<IExpression> left, std::string op);
+    void expressionNode() override {};
+    std::string TokenLiteral() override;
+    std::string String() override;
+};
+
 
 struct LetStatement : public IStatement{
     Token::Token m_token;

@@ -149,6 +149,113 @@ TEST(Parser, ParsingPrefixExpressions){
   }
 }
 
+TEST(Parser, ParsingInfixExpressions){
+  struct InfixTest {
+    std::string input;
+    long int leftValue;
+    std::string op;
+    long int rightValue;
+  };
+
+  std::vector<InfixTest> tests = {
+    {"5 + 5;", 5, "+", 5},
+    {"5 - 5;", 5, "-", 5},
+    {"5 * 5;", 5, "*", 5},
+    {"5 / 5;", 5, "/", 5},
+    {"5 > 5;", 5, ">", 5},
+    {"5 < 5;", 5, "<", 5},
+    {"5 == 5;", 5, "==", 5},
+    {"5 != 5;", 5, "!=", 5},
+  };
+  for (auto test : tests){
+    Lexer::Lexer l(test.input);
+    Parser::Parser p(l);
+    Ast::Program program = p.ParseProgram();
+    checkParserErrors(p);
+
+    ASSERT_EQ(program.m_statements.size(), 1);
+
+    Ast::IStatement* iStmt = program.m_statements[0].get();
+    auto stmt = dynamic_cast<Ast::ExpressionStatement*>(iStmt);
+    ASSERT_TRUE(stmt != nullptr);
+
+    Ast::IExpression* iExp = stmt->m_expression.get();
+    auto exp = dynamic_cast<Ast::InfixExpression*>(iExp);
+    ASSERT_TRUE(exp != nullptr);
+    
+    testIntegerLiteral(exp->m_left, test.leftValue);
+    ASSERT_EQ(exp->m_op, test.op);
+    testIntegerLiteral(exp->m_right, test.leftValue);
+  }
+}
+
+TEST(Parser, OperatorPrecedenceParsing){
+    struct OPPTest {
+      std::string input;
+      std::string expected;
+    };
+
+    std::vector<OPPTest> tests = {
+        {
+            "-a * b",
+            "((-a) * b)",
+        },
+        {
+            "!-a",
+            "(!(-a))",
+        },
+        {
+            "a + b + c",
+            "((a + b) + c)",
+        },
+        {
+            "a + b - c",
+            "((a + b) - c)",
+        },
+        {
+            "a * b * c",
+            "((a * b) * c)",
+        },
+        {
+            "a * b / c",
+            "((a * b) / c)",
+        },
+        {
+            "a + b / c",
+            "(a + (b / c))",
+        },
+        {
+            "a + b * c + d / e - f",
+            "(((a + (b * c)) + (d / e)) - f)",},
+        {
+            "3 + 4; -5 * 5",
+            "(3 + 4)((-5) * 5)",
+        },
+        {
+            "5 > 4 == 3 < 4",
+            "((5 > 4) == (3 < 4))",
+        },
+        {
+            "5 < 4 != 3 > 4",
+            "((5 < 4) != (3 > 4))",
+        },
+        {
+            "3 + 4 * 5 == 3 * 1 + 4 * 5",
+            "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))",
+        },
+    };
+
+  for (auto test : tests){
+    Lexer::Lexer l(test.input);
+    Parser::Parser p(l);
+    Ast::Program program = p.ParseProgram();
+    checkParserErrors(p);
+
+    std::string actual = program.String();
+    ASSERT_EQ(actual, test.expected);
+  }
+}
+
 
 
 

@@ -2,6 +2,7 @@
 #include "ast.hpp"
 #include "token.hpp"
 #include <memory>
+#include <stdexcept>
 namespace Parser {
 
 
@@ -12,6 +13,15 @@ Parser::Parser(Lexer::Lexer& lexer):m_l(lexer) {
     registerPrefix(Token::INT, &Parser::parseIntegerLiteral);
     registerPrefix(Token::BANG, &Parser::parsePrefixExpression);
     registerPrefix(Token::MINUS, &Parser::parsePrefixExpression);
+
+    registerInfix(Token::PLUS, &Parser::parseInfixExpression);
+    registerInfix(Token::MINUS, &Parser::parseInfixExpression);
+    registerInfix(Token::SLASH, &Parser::parseInfixExpression);
+    registerInfix(Token::ASTERISK, &Parser::parseInfixExpression);
+    registerInfix(Token::EQ, &Parser::parseInfixExpression);
+    registerInfix(Token::NOT_EQ, &Parser::parseInfixExpression);
+    registerInfix(Token::LT, &Parser::parseInfixExpression);
+    registerInfix(Token::GT, &Parser::parseInfixExpression);
 }
 
 void Parser::nextToken() {
@@ -84,13 +94,29 @@ std::unique_ptr<Ast::ExpressionStatement> Parser::parseExpressionStatement(){
 
 
 std::unique_ptr<Ast::IExpression> Parser::parseExpression(Precedence precedence){
-    prefixParseFn prefix = m_prefixParseFns[m_curToken.Type];
-    if(prefix == nullptr){
+    prefixParseFn prefix;
+    try {
+        prefix = m_prefixParseFns[m_curToken.Type];
+    }
+    catch(std::out_of_range& err){
         noPrefixParseFnError(m_curToken.Type);
         return nullptr;
+
     }
 
     auto leftExp = (this->*prefix)();
+
+    while(!peekTokenIs(Token::SEMICOLON) && precedence < peekPrecedence()){
+        infixParseFn infix;
+        try {
+            infix = m_infixParseFns.at(m_peekToken.Type);
+        } catch(std::out_of_range& err){
+            return leftExp;
+        }
+        nextToken();
+        leftExp = (this->*infix)(std::move(leftExp));
+    }
+
     return leftExp;
 }
 
@@ -121,6 +147,13 @@ std::unique_ptr<Ast::IExpression> Parser::parsePrefixExpression(){
     return expression;
 }
 
+std::unique_ptr<Ast::IExpression> Parser::parseInfixExpression(std::unique_ptr<Ast::IExpression> left){
+    auto expression = std::make_unique<Ast::InfixExpression>(m_curToken, std::move(left),m_curToken.Literal); 
+    Precedence precedence = curPrecedence();
+    nextToken();
+    expression->m_right = parseExpression(precedence);
+    return expression;
+}
 
 void Parser::registerPrefix(Token::TokenType tokenType, prefixParseFn fn){
     m_prefixParseFns[tokenType] = fn;
@@ -147,6 +180,31 @@ bool Parser::expectPeek(Token::TokenType t){
         return false;
     }
 }
+
+Precedence Parser::peekPrecedence(){
+    Precedence p;
+    try{
+        p = precedences.at(m_peekToken.Type);
+    }
+
+    catch(std::out_of_range& err){
+        p = LOWEST;
+    }
+    return p;
+}
+
+Precedence Parser::curPrecedence(){
+    Precedence p;
+    try{
+        p = precedences.at(m_curToken.Type);
+    }
+
+    catch(std::out_of_range& err){
+        p = LOWEST;
+    }
+    return p;
+}
+
 
 std::vector<std::string> Parser::Errors(){
     return m_errors;
