@@ -2,6 +2,7 @@
 #include "lexer.hpp"
 #include "parser.hpp"
 #include <gtest/gtest.h>
+#include <iostream>
 #include <memory>
 #include <variant>
 
@@ -47,33 +48,21 @@ void testIdentifier(std::unique_ptr<Ast::IExpression> &exp, std::string value) {
         << "got=" << ident->TokenLiteral();
 }
 
-// Test int expression
 void testLiteralExpression(std::unique_ptr<Ast::IExpression> &exp,
-                           long int expected) {
-    testIntegerLiteral(exp, expected);
+                           std::variant<long int, std::string> expectedValue) {
+    if (std::holds_alternative<long int>(expectedValue)) {
+        testIntegerLiteral(exp, std::get<long int>(expectedValue));
+    } else if (std::holds_alternative<std::string>(expectedValue)) {
+        testIdentifier(exp, std::get<std::string>(expectedValue));
+    } else {
+        ASSERT_TRUE(false) << "type of exp not handled";
+    }
 }
 
-// Test identifier expression
-void testLiteralExpression(std::unique_ptr<Ast::IExpression> &exp,
-                           std::string expected) {
-    testIdentifier(exp, expected);
-}
-
-// test int InfixExpression
-void testInfixExpression(std::unique_ptr<Ast::IExpression> &exp, long int left,
-                         std::string op, long int right) {
-    auto opExp = dynamic_cast<Ast::InfixExpression *>(exp.get());
-    ASSERT_TRUE(opExp != nullptr) << "exp is not an InfixExpression";
-
-    testLiteralExpression(opExp->m_left, left);
-    testLiteralExpression(opExp->m_right, right);
-    ASSERT_EQ(opExp->m_op, op)
-        << "exp.Operator is not " << op << ". got=" << opExp->m_op;
-}
-
-// test string InfixExpession
 void testInfixExpression(std::unique_ptr<Ast::IExpression> &exp,
-                         std::string left, std::string op, std::string right) {
+                         std::variant<long int, std::string> left,
+                         std::string op,
+                         std::variant<long int, std::string> right) {
     auto opExp = dynamic_cast<Ast::InfixExpression *>(exp.get());
     ASSERT_TRUE(opExp != nullptr) << "exp is not an InfixExpression";
 
@@ -87,7 +76,7 @@ TEST(Parser, LetStatements) {
     struct LetStmtTest {
         std::string input;
         std::string expectedIdentifier;
-        std::variant<int, std::string> expectedValue;
+        std::variant<long int, std::string> expectedValue;
     };
 
     std::vector<LetStmtTest> tests = {
@@ -108,13 +97,11 @@ TEST(Parser, LetStatements) {
 
         std::unique_ptr<Ast::IStatement> stmt =
             std::move(program.m_statements[0]);
-
         testLetStatement(stmt, test.expectedIdentifier);
-        // TODO: Figure out what is going on here
+
         Ast::IStatement *lStmt = stmt.get();
         Ast::LetStatement *letStmt = dynamic_cast<Ast::LetStatement *>(lStmt);
         testLiteralExpression(letStmt->m_expression, test.expectedValue);
-        // test.expectedIdentifier);
     }
 }
 
