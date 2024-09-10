@@ -1,7 +1,7 @@
 #pragma once
 #include "token.hpp"
-#include <string>
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace Ast {
@@ -22,8 +22,8 @@ struct IExpression : public INode {
     virtual ~IExpression() = default;
 };
 
-struct Program : public INode{
-    //Program(std::vector<IStatement*> statements);
+struct Program : public INode {
+    // Program(std::vector<IStatement*> statements);
 
     std::vector<std::unique_ptr<IStatement>> m_statements;
     std::string TokenLiteral() override;
@@ -31,7 +31,7 @@ struct Program : public INode{
 };
 
 // the x in "let x = 5;". also the x in "let a = x;:"
-struct Identifier : public IExpression{
+struct Identifier : public IExpression {
     Token::Token m_token;
     std::string m_value;
 
@@ -68,14 +68,14 @@ struct InfixExpression : public IExpression {
     std::string m_op;
     std::unique_ptr<IExpression> m_right;
 
-    InfixExpression(Token::Token t, std::unique_ptr<IExpression> left, std::string op);
+    InfixExpression(Token::Token t, std::unique_ptr<IExpression> left,
+                    std::string op);
     void expressionNode() override {};
     std::string TokenLiteral() override;
     std::string String() override;
 };
 
-
-struct LetStatement : public IStatement{
+struct LetStatement : public IStatement {
     Token::Token m_token;
     std::unique_ptr<Identifier> m_name;
     std::unique_ptr<IExpression> m_expression;
@@ -90,10 +90,10 @@ struct LetStatement : public IStatement{
 struct ReturnStatement : public IStatement {
     Token::Token m_token;
     std::unique_ptr<IExpression> m_returnValue;
- 
+
     ReturnStatement(Token::Token token);
     std::string TokenLiteral() override;
-    void statementNode() override{};
+    void statementNode() override {};
     std::string String() override;
 };
 
@@ -104,11 +104,13 @@ struct ExpressionStatement : public IStatement {
     ExpressionStatement(Token::Token token);
 
     std::string TokenLiteral() override;
-    void statementNode() override{};
+    void statementNode() override {};
     std::string String() override;
 };
 
+struct Boolean : public IStatement {
+    Token::Token m_token;
+    bool Value;
+};
 
 } // namespace Ast
-
-
