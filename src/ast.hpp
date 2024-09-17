@@ -108,9 +108,14 @@ struct ExpressionStatement : public IStatement {
     std::string String() override;
 };
 
-struct Boolean : public IStatement {
+struct Boolean : public IExpression {
     Token::Token m_token;
     bool Value;
+
+    Boolean(Token::Token token);
+    std::string TokenLiteral() override;
+    void expressionNode() override {};
+    std::string String() override;
 };
 
 } // namespace Ast

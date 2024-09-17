@@ -1,9 +1,9 @@
 #include "ast.hpp"
 #include "lexer.hpp"
 #include "token.hpp"
+#include <functional>
 #include <memory>
 #include <unordered_map>
-#include <functional>
 namespace Parser {
 
 enum Precedence {
@@ -18,20 +18,15 @@ enum Precedence {
 };
 
 const std::unordered_map<Token::TokenType, Precedence> precedences = {
-    {Token::EQ, EQUALS},
-    {Token::NOT_EQ, EQUALS},
-    {Token::LT, LESSGREATER},
-    {Token::GT, LESSGREATER},
-    {Token::PLUS, SUM},
-    {Token::MINUS, SUM},
-    {Token::SLASH, PRODUCT},
-    {Token::ASTERISK, PRODUCT}
-};
-
+    {Token::EQ, EQUALS},      {Token::NOT_EQ, EQUALS},
+    {Token::LT, LESSGREATER}, {Token::GT, LESSGREATER},
+    {Token::PLUS, SUM},       {Token::MINUS, SUM},
+    {Token::SLASH, PRODUCT},  {Token::ASTERISK, PRODUCT}};
 
 struct Parser {
-    using prefixParseFn = std::unique_ptr<Ast::IExpression>(Parser::*)(); 
-    using infixParseFn = std::unique_ptr<Ast::IExpression>(Parser::*)(std::unique_ptr<Ast::IExpression> expr); 
+    using prefixParseFn = std::unique_ptr<Ast::IExpression> (Parser::*)();
+    using infixParseFn = std::unique_ptr<Ast::IExpression> (Parser::*)(
+        std::unique_ptr<Ast::IExpression> expr);
 
     Lexer::Lexer &m_l;
     Token::Token m_curToken;
@@ -53,7 +48,10 @@ struct Parser {
     std::unique_ptr<Ast::IExpression> parseIdentifier();
     std::unique_ptr<Ast::IExpression> parseIntegerLiteral();
     std::unique_ptr<Ast::IExpression> parsePrefixExpression();
-    std::unique_ptr<Ast::IExpression> parseInfixExpression(std::unique_ptr<Ast::IExpression> left);
+    std::unique_ptr<Ast::IExpression>
+    parseInfixExpression(std::unique_ptr<Ast::IExpression> left);
+
+    std::unique_ptr<Ast::IExpression> parseBoolean();
 
     void registerPrefix(Token::TokenType tokenType, prefixParseFn fn);
     void registerInfix(Token::TokenType, infixParseFn fn);
@@ -68,10 +66,6 @@ struct Parser {
     std::vector<std::string> Errors();
     void peekError(Token::TokenType t);
     void noPrefixParseFnError(Token::TokenType t);
-
-
 };
-
-
 
 } // namespace Parser

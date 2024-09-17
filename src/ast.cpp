@@ -108,4 +108,10 @@ std::string ExpressionStatement::String() {
     return "";
 }
 
+// Boolean Stuff
+Boolean::Boolean(Token::Token token) : m_token(token) {};
+std::string Boolean::String() { return m_token.Literal; }
+
+std::string Boolean::TokenLiteral() { return m_token.Literal; }
+
 } // namespace Ast
