@@ -5,6 +5,7 @@
 #include <memory>
 #include <variant>
 
+typedef std::variant<long int, std::string, bool> variant;
 void testLetStatement(std::unique_ptr<Ast::IStatement> &s, std::string name) {
     Ast::IStatement *stmt = s.get();
     Ast::LetStatement *letStmt = dynamic_cast<Ast::LetStatement *>(stmt);
@@ -35,6 +36,19 @@ void testIntegerLiteral(std::unique_ptr<Ast::IExpression> &il, long int value) {
         << ". got=" << integ->TokenLiteral();
 }
 
+void testBooleanLiteral(std::unique_ptr<Ast::IExpression> &exp, bool value) {
+    auto boolean = dynamic_cast<Ast::Boolean *>(exp.get());
+    ASSERT_TRUE(boolean != nullptr) << "exp not a boolean value";
+
+    ASSERT_EQ(boolean->Value, value)
+        << "boolean.value not " << value << ". got=" << boolean->Value;
+
+    std::string txtValue = value ? "true" : "false";
+    ASSERT_EQ(boolean->TokenLiteral(), txtValue)
+        << "boolean.TokenLiteral not " << boolean->TokenLiteral()
+        << ". got=" << txtValue;
+}
+
 void testIdentifier(std::unique_ptr<Ast::IExpression> &exp, std::string value) {
     auto ident = dynamic_cast<Ast::Identifier *>(exp.get());
     ASSERT_TRUE(ident != nullptr) << "exp not an identifier";
@@ -48,20 +62,21 @@ void testIdentifier(std::unique_ptr<Ast::IExpression> &exp, std::string value) {
 }
 
 void testLiteralExpression(std::unique_ptr<Ast::IExpression> &exp,
-                           std::variant<long int, std::string> expectedValue) {
+                           variant expectedValue) {
     if (std::holds_alternative<long int>(expectedValue)) {
         testIntegerLiteral(exp, std::get<long int>(expectedValue));
     } else if (std::holds_alternative<std::string>(expectedValue)) {
         testIdentifier(exp, std::get<std::string>(expectedValue));
+    } else if (std::holds_alternative<bool>(expectedValue)) {
+        testBooleanLiteral(exp, std::get<bool>(expectedValue));
     } else {
-        ASSERT_TRUE(false) << "type of exp not handled";
+        ASSERT_TRUE(false)
+            << "type of exp not handled in testLiteralExpression";
     }
 }
 
-void testInfixExpression(std::unique_ptr<Ast::IExpression> &exp,
-                         std::variant<long int, std::string> left,
-                         std::string op,
-                         std::variant<long int, std::string> right) {
+void testInfixExpression(std::unique_ptr<Ast::IExpression> &exp, variant left,
+                         std::string op, variant right) {
     auto opExp = dynamic_cast<Ast::InfixExpression *>(exp.get());
     ASSERT_TRUE(opExp != nullptr) << "exp is not an InfixExpression";
 
@@ -75,12 +90,12 @@ TEST(Parser, LetStatements) {
     struct LetStmtTest {
         std::string input;
         std::string expectedIdentifier;
-        std::variant<long int, std::string> expectedValue;
+        variant expectedValue;
     };
 
     std::vector<LetStmtTest> tests = {
         {"let x = 5;", "x", 5},
-        {"let y = true;", "y", "true"},
+        {"let y = true;", "y", true},
         {"let foobar = y;", "foobar", "y"},
     };
 
@@ -189,6 +204,33 @@ TEST(Parser, IntegerLiteralExpression) {
 
     ASSERT_TRUE(intLiteral->m_value == 5);
     ASSERT_TRUE(intLiteral->TokenLiteral() == "5");
+}
+
+TEST(Parser, BooleanLiteralExpression) {
+    struct booleanTest {
+        std::string input;
+        bool expectedBoolean;
+    };
+
+    std::vector<booleanTest> tests = {{"true;", true}, {"false;", false}};
+    for (booleanTest btest : tests) {
+        Lexer::Lexer l(btest.input);
+        Parser::Parser p(l);
+        Ast::Program program = p.ParseProgram();
+        checkParserErrors(p);
+
+        ASSERT_EQ(program.m_statements.size(), 1);
+
+        Ast::IStatement *iStmt = program.m_statements[0].get();
+        auto stmt = dynamic_cast<Ast::ExpressionStatement *>(iStmt);
+        ASSERT_TRUE(stmt != nullptr);
+
+        Ast::IExpression *iExp = stmt->m_expression.get();
+        auto boolLiteral = dynamic_cast<Ast::Boolean *>(iExp);
+        ASSERT_TRUE(boolLiteral != nullptr);
+
+        ASSERT_TRUE(boolLiteral->Value == btest.expectedBoolean);
+    }
 }
 
 TEST(Parser, ParsingPrefixExpressions) {
