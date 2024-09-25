@@ -52,6 +52,8 @@ struct Parser {
     parseInfixExpression(std::unique_ptr<Ast::IExpression> left);
     std::unique_ptr<Ast::IExpression> parseBoolean();
     std::unique_ptr<Ast::IExpression> parseGroupedExpression();
+    std::unique_ptr<Ast::BlockStatement> parseBlockStatement();
+    std::unique_ptr<Ast::IExpression> parseIfExpression();
 
     void registerPrefix(Token::TokenType tokenType, prefixParseFn fn);
     void registerInfix(Token::TokenType, infixParseFn fn);

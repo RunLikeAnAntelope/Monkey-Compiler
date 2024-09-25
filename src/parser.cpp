@@ -16,6 +16,7 @@ Parser::Parser(Lexer::Lexer &lexer) : m_l(lexer) {
     registerPrefix(Token::TRUE, &Parser::parseBoolean);
     registerPrefix(Token::FALSE, &Parser::parseBoolean);
     registerPrefix(Token::LPAREN, &Parser::parseGroupedExpression);
+    registerPrefix(Token::IF, &Parser::parseIfExpression);
 
     registerInfix(Token::PLUS, &Parser::parseInfixExpression);
     registerInfix(Token::MINUS, &Parser::parseInfixExpression);
@@ -102,7 +103,7 @@ std::unique_ptr<Ast::IExpression>
 Parser::parseExpression(Precedence precedence) {
     prefixParseFn prefix;
     try {
-        prefix = m_prefixParseFns[m_curToken.Type];
+        prefix = m_prefixParseFns.at(m_curToken.Type);
     } catch (std::out_of_range &err) {
         noPrefixParseFnError(m_curToken.Type);
         return nullptr;
@@ -176,6 +177,47 @@ std::unique_ptr<Ast::IExpression> Parser::parseGroupedExpression() {
         return nullptr;
     }
     return exp;
+}
+
+std::unique_ptr<Ast::BlockStatement> Parser::parseBlockStatement() {
+    auto block = std::make_unique<Ast::BlockStatement>(m_curToken);
+    nextToken();
+    while (!curTokenIs(Token::RBRACE) && !curTokenIs(Token::EOF_)) {
+        auto stmt = parseStatement();
+        if (stmt != nullptr) {
+            block->m_statements.push_back(std::move(stmt));
+        }
+        nextToken();
+    }
+    return block;
+}
+
+std::unique_ptr<Ast::IExpression> Parser::parseIfExpression() {
+    auto expression = std::make_unique<Ast::IfExpression>(m_curToken);
+    if (!expectPeek(Token::LPAREN)) {
+        return nullptr;
+    }
+
+    nextToken();
+    expression->m_condition = parseExpression(LOWEST);
+
+    if (!expectPeek(Token::RPAREN)) {
+        return nullptr;
+    }
+    if (!expectPeek(Token::LBRACE)) {
+        return nullptr;
+    }
+    expression->m_consequence = parseBlockStatement();
+
+    if (peekTokenIs(Token::ELSE)) {
+        nextToken();
+        if (!expectPeek(Token::LBRACE)) {
+            return nullptr;
+        }
+        expression->m_alternative = parseBlockStatement();
+    }
+
+    return expression;
 }
 
 void Parser::registerPrefix(Token::TokenType tokenType, prefixParseFn fn) {

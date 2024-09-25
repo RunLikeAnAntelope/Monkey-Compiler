@@ -90,6 +90,7 @@ struct BlockStatement : public IStatement {
     Token::Token m_token;
     std::vector<std::unique_ptr<IStatement>> m_statements;
 
+    BlockStatement(Token::Token token);
     std::string TokenLiteral() override;
     void statementNode() override {};
     std::string String() override;
@@ -101,6 +102,7 @@ struct IfExpression : public IExpression {
     std::unique_ptr<BlockStatement> m_consequence;
     std::unique_ptr<BlockStatement> m_alternative;
 
+    IfExpression(Token::Token token);
     void expressionNode() override {};
     std::string TokenLiteral() override;
     std::string String() override;

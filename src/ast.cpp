@@ -70,6 +70,8 @@ std::string Boolean::String() { return m_token.Literal; }
 std::string Boolean::TokenLiteral() { return m_token.Literal; }
 
 // If Expression Stuff
+IfExpression::IfExpression(Token::Token token) : m_token(token) {};
+
 std::string IfExpression::String() {
     std::string out;
     out.append("if");
@@ -131,6 +133,8 @@ std::string ExpressionStatement::String() {
 }
 
 // Block Statement Stuff
+BlockStatement::BlockStatement(Token::Token token) : m_token(token) {};
+
 std::string BlockStatement::TokenLiteral() { return m_token.Literal; }
 
 std::string BlockStatement::String() {
