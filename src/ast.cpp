@@ -63,6 +63,28 @@ std::string InfixExpression::String() {
     out.append(")");
     return out;
 }
+
+// Boolean Stuff
+Boolean::Boolean(Token::Token token) : m_token(token) {};
+std::string Boolean::String() { return m_token.Literal; }
+std::string Boolean::TokenLiteral() { return m_token.Literal; }
+
+// If Expression Stuff
+std::string IfExpression::String() {
+    std::string out;
+    out.append("if");
+    out.append(this->m_condition->String());
+    out.append(" ");
+    out.append(this->m_consequence->String());
+    if (this->m_alternative != nullptr) {
+        out.append("else");
+        out.append(this->m_alternative->String());
+    }
+    return out;
+}
+
+std::string IfExpression::TokenLiteral() { return m_token.Literal; }
+
 // LetStatement stuff
 LetStatement::LetStatement(Token::Token token) : m_token(token) {};
 
@@ -108,10 +130,15 @@ std::string ExpressionStatement::String() {
     return "";
 }
 
-// Boolean Stuff
-Boolean::Boolean(Token::Token token) : m_token(token) {};
-std::string Boolean::String() { return m_token.Literal; }
+// Block Statement Stuff
+std::string BlockStatement::TokenLiteral() { return m_token.Literal; }
 
-std::string Boolean::TokenLiteral() { return m_token.Literal; }
+std::string BlockStatement::String() {
+    std::string out;
+    for (auto &statement : this->m_statements) {
+        out.append(statement->String());
+    }
+    return out;
+}
 
 } // namespace Ast

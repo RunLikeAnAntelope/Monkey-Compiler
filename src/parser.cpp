@@ -165,7 +165,7 @@ Parser::parseInfixExpression(std::unique_ptr<Ast::IExpression> left) {
 
 std::unique_ptr<Ast::IExpression> Parser::parseBoolean() {
     auto b = std::make_unique<Ast::Boolean>(m_curToken);
-    b->Value = m_curToken.Type == Token::FALSE ? false : true;
+    b->m_value = m_curToken.Type == Token::FALSE ? false : true;
     return b;
 }
 

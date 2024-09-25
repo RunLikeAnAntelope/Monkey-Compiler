@@ -73,6 +73,39 @@ struct InfixExpression : public IExpression {
     std::string String() override;
 };
 
+struct Boolean : public IExpression {
+    Token::Token m_token;
+    bool m_value;
+
+    Boolean(Token::Token token);
+    std::string TokenLiteral() override;
+    void expressionNode() override {};
+    std::string String() override;
+};
+
+// Unhappy I need to order this way. Might be better to have seperate files for
+// each class, but I am trying to follow the example to the best of my
+// abilities.
+struct BlockStatement : public IStatement {
+    Token::Token m_token;
+    std::vector<std::unique_ptr<IStatement>> m_statements;
+
+    std::string TokenLiteral() override;
+    void statementNode() override {};
+    std::string String() override;
+};
+
+struct IfExpression : public IExpression {
+    Token::Token m_token;
+    std::unique_ptr<IExpression> m_condition;
+    std::unique_ptr<BlockStatement> m_consequence;
+    std::unique_ptr<BlockStatement> m_alternative;
+
+    void expressionNode() override {};
+    std::string TokenLiteral() override;
+    std::string String() override;
+};
+
 struct LetStatement : public IStatement {
     Token::Token m_token;
     std::unique_ptr<Identifier> m_name;
@@ -103,16 +136,6 @@ struct ExpressionStatement : public IStatement {
 
     std::string TokenLiteral() override;
     void statementNode() override {};
-    std::string String() override;
-};
-
-struct Boolean : public IExpression {
-    Token::Token m_token;
-    bool Value;
-
-    Boolean(Token::Token token);
-    std::string TokenLiteral() override;
-    void expressionNode() override {};
     std::string String() override;
 };
 

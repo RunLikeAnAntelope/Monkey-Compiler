@@ -40,8 +40,8 @@ void testBooleanLiteral(std::unique_ptr<Ast::IExpression> &exp, bool value) {
     auto boolean = dynamic_cast<Ast::Boolean *>(exp.get());
     ASSERT_TRUE(boolean != nullptr) << "exp not a boolean value";
 
-    ASSERT_EQ(boolean->Value, value)
-        << "boolean.value not " << value << ". got=" << boolean->Value;
+    ASSERT_EQ(boolean->m_value, value)
+        << "boolean.value not " << value << ". got=" << boolean->m_value;
 
     std::string txtValue = value ? "true" : "false";
     ASSERT_EQ(boolean->TokenLiteral(), txtValue)
@@ -229,7 +229,7 @@ TEST(Parser, BooleanLiteralExpression) {
         auto boolLiteral = dynamic_cast<Ast::Boolean *>(iExp);
         ASSERT_TRUE(boolLiteral != nullptr);
 
-        ASSERT_TRUE(boolLiteral->Value == btest.expectedBoolean);
+        ASSERT_TRUE(boolLiteral->m_value == btest.expectedBoolean);
     }
 }
 
@@ -416,4 +416,96 @@ TEST(Parser, OperatorPrecedenceParsing) {
         std::string actual = program.String();
         ASSERT_EQ(actual, test.expected);
     }
+}
+
+TEST(Parser, IfExpressionParsing) {
+    std::string input = "if (x < y) { x }";
+
+    Lexer::Lexer l(input);
+    Parser::Parser p(l);
+    Ast::Program program = p.ParseProgram();
+    checkParserErrors(p);
+
+    ASSERT_EQ(program.m_statements.size(), 1)
+        << "program.m_statements does not contain 1 statement. got="
+        << program.m_statements.size();
+
+    Ast::IStatement *iStmt = program.m_statements[0].get();
+    auto stmt = dynamic_cast<Ast::ExpressionStatement *>(iStmt);
+    ASSERT_TRUE(stmt != nullptr)
+        << "program.m_statements[0] is not an AST::ExpressionStatement";
+
+    Ast::IExpression *iExp = stmt->m_expression.get();
+    auto exp = dynamic_cast<Ast::IfExpression *>(iExp);
+    ASSERT_TRUE(exp != nullptr) << "stmt->m_expression is not an IfExpression";
+
+    variant left("x");
+    variant right("y");
+    testInfixExpression(exp->m_condition.get(), left, "<", right);
+
+    ASSERT_EQ(exp->m_consequence->m_statements.size(), 1)
+        << "consequence is not 1 statement. got="
+        << exp->m_consequence->m_statements.size();
+
+    Ast::IStatement *cStmt = exp->m_consequence->m_statements[0].get();
+    auto cExpStmt = dynamic_cast<Ast::ExpressionStatement *>(cStmt);
+    ASSERT_TRUE(cExpStmt != nullptr)
+        << "Statements[0] is not an Ast::ExpressionStatement";
+
+    testIdentifier(cExpStmt->m_expression, "x");
+
+    ASSERT_EQ(exp->m_alternative, nullptr) << "exp->Alternative was not null";
+}
+
+TEST(Parser, IfElseExpressionParsing) {
+    std::string input = "if (x < y) { x } else { y }";
+
+    Lexer::Lexer l(input);
+    Parser::Parser p(l);
+    Ast::Program program = p.ParseProgram();
+    checkParserErrors(p);
+
+    ASSERT_EQ(program.m_statements.size(), 1)
+        << "program.m_statements does not contain 1 statement. got="
+        << program.m_statements.size();
+
+    Ast::IStatement *iStmt = program.m_statements[0].get();
+    auto stmt = dynamic_cast<Ast::ExpressionStatement *>(iStmt);
+    ASSERT_TRUE(stmt != nullptr)
+        << "program.m_statements[0] is not an AST::ExpressionStatement";
+
+    Ast::IExpression *iExp = stmt->m_expression.get();
+    auto exp = dynamic_cast<Ast::IfExpression *>(iExp);
+    ASSERT_TRUE(exp != nullptr) << "stmt->m_expression is not an IfExpression";
+
+    variant left("x");
+    variant right("y");
+    testInfixExpression(exp->m_condition.get(), left, "<", right);
+
+    // Test true path
+    ASSERT_EQ(exp->m_consequence->m_statements.size(), 1)
+        << "consequence is not 1 statement. got="
+        << exp->m_consequence->m_statements.size();
+
+    Ast::IStatement *cStmt = exp->m_consequence->m_statements[0].get();
+    auto cExpStmt = dynamic_cast<Ast::ExpressionStatement *>(cStmt);
+    ASSERT_TRUE(cExpStmt != nullptr)
+        << "Statements[0] is not an Ast::ExpressionStatement";
+
+    testIdentifier(cExpStmt->m_expression, "x");
+
+    // Set Else Path
+    ASSERT_FALSE(exp->m_alternative == nullptr)
+        << "exp->Alternative was not null";
+
+    ASSERT_EQ(exp->m_alternative->m_statements.size(), 1)
+        << "consequence is not 1 statement. got="
+        << exp->m_alternative->m_statements.size();
+
+    Ast::IStatement *aStmt = exp->m_alternative->m_statements[0].get();
+    auto aExpStmt = dynamic_cast<Ast::ExpressionStatement *>(aStmt);
+    ASSERT_TRUE(aExpStmt != nullptr)
+        << "Statements[0] is not an Ast::ExpressionStatement";
+
+    testIdentifier(aExpStmt->m_expression, "y");
 }
