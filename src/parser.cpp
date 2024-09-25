@@ -15,6 +15,7 @@ Parser::Parser(Lexer::Lexer &lexer) : m_l(lexer) {
     registerPrefix(Token::MINUS, &Parser::parsePrefixExpression);
     registerPrefix(Token::TRUE, &Parser::parseBoolean);
     registerPrefix(Token::FALSE, &Parser::parseBoolean);
+    registerPrefix(Token::LPAREN, &Parser::parseGroupedExpression);
 
     registerInfix(Token::PLUS, &Parser::parseInfixExpression);
     registerInfix(Token::MINUS, &Parser::parseInfixExpression);
@@ -166,6 +167,15 @@ std::unique_ptr<Ast::IExpression> Parser::parseBoolean() {
     auto b = std::make_unique<Ast::Boolean>(m_curToken);
     b->Value = m_curToken.Type == Token::FALSE ? false : true;
     return b;
+}
+
+std::unique_ptr<Ast::IExpression> Parser::parseGroupedExpression() {
+    nextToken();
+    auto exp = parseExpression(LOWEST);
+    if (!expectPeek(Token::RPAREN)) {
+        return nullptr;
+    }
+    return exp;
 }
 
 void Parser::registerPrefix(Token::TokenType tokenType, prefixParseFn fn) {

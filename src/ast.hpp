@@ -23,8 +23,6 @@ struct IExpression : public INode {
 };
 
 struct Program : public INode {
-    // Program(std::vector<IStatement*> statements);
-
     std::vector<std::unique_ptr<IStatement>> m_statements;
     std::string TokenLiteral() override;
     std::string String() override;

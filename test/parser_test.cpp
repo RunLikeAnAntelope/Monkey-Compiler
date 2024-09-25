@@ -75,9 +75,9 @@ void testLiteralExpression(std::unique_ptr<Ast::IExpression> &exp,
     }
 }
 
-void testInfixExpression(std::unique_ptr<Ast::IExpression> &exp, variant left,
-                         std::string op, variant right) {
-    auto opExp = dynamic_cast<Ast::InfixExpression *>(exp.get());
+void testInfixExpression(Ast::IExpression *exp, variant left, std::string op,
+                         variant right) {
+    auto opExp = dynamic_cast<Ast::InfixExpression *>(exp);
     ASSERT_TRUE(opExp != nullptr) << "exp is not an InfixExpression";
 
     testLiteralExpression(opExp->m_left, left);
@@ -237,10 +237,17 @@ TEST(Parser, ParsingPrefixExpressions) {
     struct PrefixTest {
         std::string input;
         std::string op;
-        long int integerValue;
+        variant value;
     };
 
-    std::vector<PrefixTest> tests = {{"!5;", "!", 5}, {"-15;", "-", 15}};
+    std::vector<PrefixTest> tests = {
+        {"!5;", "!", 5},
+        {"-15;", "-", 15},
+        {"!foobar;", "!", "foobar"},
+        {"-foobar;", "-", "foobar"},
+        {"!true;", "!", true},
+        {"!false;", "!", false},
+    };
 
     for (auto test : tests) {
         Lexer::Lexer l(test.input);
@@ -259,22 +266,30 @@ TEST(Parser, ParsingPrefixExpressions) {
         ASSERT_TRUE(exp != nullptr);
 
         ASSERT_EQ(exp->m_op, test.op);
-        testIntegerLiteral(exp->m_right, test.integerValue);
+        testLiteralExpression(exp->m_right, test.value);
     }
 }
 
 TEST(Parser, ParsingInfixExpressions) {
     struct InfixTest {
         std::string input;
-        long int leftValue;
+        variant leftValue;
         std::string op;
-        long int rightValue;
+        variant rightValue;
     };
 
     std::vector<InfixTest> tests = {
-        {"5 + 5;", 5, "+", 5},   {"5 - 5;", 5, "-", 5},   {"5 * 5;", 5, "*", 5},
-        {"5 / 5;", 5, "/", 5},   {"5 > 5;", 5, ">", 5},   {"5 < 5;", 5, "<", 5},
-        {"5 == 5;", 5, "==", 5}, {"5 != 5;", 5, "!=", 5},
+        {"5 + 5;", 5, "+", 5},
+        {"5 - 5;", 5, "-", 5},
+        {"5 * 5;", 5, "*", 5},
+        {"5 / 5;", 5, "/", 5},
+        {"5 > 5;", 5, ">", 5},
+        {"5 < 5;", 5, "<", 5},
+        {"5 == 5;", 5, "==", 5},
+        {"5 != 5;", 5, "!=", 5},
+        {"true == true;", true, "==", true},
+        {"true != false", true, "!=", false},
+        {"false == false", false, "==", false},
     };
     for (auto test : tests) {
         Lexer::Lexer l(test.input);
@@ -292,9 +307,10 @@ TEST(Parser, ParsingInfixExpressions) {
         auto exp = dynamic_cast<Ast::InfixExpression *>(iExp);
         ASSERT_TRUE(exp != nullptr);
 
-        testIntegerLiteral(exp->m_left, test.leftValue);
+        testLiteralExpression(exp->m_left, test.leftValue);
         ASSERT_EQ(exp->m_op, test.op);
-        testIntegerLiteral(exp->m_right, test.leftValue);
+        testLiteralExpression(exp->m_right, test.rightValue);
+        testInfixExpression(iExp, test.leftValue, test.op, test.rightValue);
     }
 }
 
@@ -352,6 +368,42 @@ TEST(Parser, OperatorPrecedenceParsing) {
         {
             "3 + 4 * 5 == 3 * 1 + 4 * 5",
             "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))",
+        },
+        {
+            "true",
+            "true",
+        },
+        {
+            "false",
+            "false",
+        },
+        {
+            "3 > 5 == false",
+            "((3 > 5) == false)",
+        },
+        {
+            "3 < 5 == true",
+            "((3 < 5) == true)",
+        },
+        {
+            "1 + (2 + 3) + 4",
+            "((1 + (2 + 3)) + 4)",
+        },
+        {
+            "(5 + 5) * 2",
+            "((5 + 5) * 2)",
+        },
+        {
+            "2 / (5 + 5)",
+            "(2 / (5 + 5))",
+        },
+        {
+            "-(5 + 5)",
+            "(-(5 + 5))",
+        },
+        {
+            "!(true == true)",
+            "(!(true == true))",
         },
     };
 
