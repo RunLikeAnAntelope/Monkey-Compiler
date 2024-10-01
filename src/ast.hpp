@@ -141,4 +141,15 @@ struct ExpressionStatement : public IStatement {
     std::string String() override;
 };
 
+struct FunctionLiteral : public IExpression {
+    Token::Token m_token;
+    std::vector<std::unique_ptr<Identifier>> m_parameters;
+    std::unique_ptr<BlockStatement> m_body;
+
+    FunctionLiteral(Token::Token token);
+    void expressionNode() override {};
+    std::string TokenLiteral() override;
+    std::string String() override;
+};
+
 } // namespace Ast

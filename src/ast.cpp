@@ -1,4 +1,5 @@
 #include "ast.hpp"
+#include "helpers.hpp"
 
 namespace Ast {
 
@@ -144,5 +145,24 @@ std::string BlockStatement::String() {
     }
     return out;
 }
+
+// Function Literal Stuff
+FunctionLiteral::FunctionLiteral(Token::Token token) : m_token(token) {};
+
+std::string FunctionLiteral::String() {
+    std::string out;
+    std::vector<std::string> params;
+    for (auto &str : this->m_parameters) {
+        params.push_back(str->String());
+    }
+    out.append(this->TokenLiteral());
+    out.append("(");
+    out.append(Helpers::combineVecStrWithDelim(params, ", "));
+    out.append(") ");
+    out.append(this->m_body->String());
+    return out;
+}
+
+std::string FunctionLiteral::TokenLiteral() { return m_token.Literal; }
 
 } // namespace Ast

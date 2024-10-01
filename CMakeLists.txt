@@ -32,6 +32,8 @@ set(SOURCES
     "src/ast.cpp"
     "src/parser.hpp"
     "src/parser.cpp"
+    "src/helpers.hpp"
+    "src/helpers.cpp"
 )
 
 set(TESTS
