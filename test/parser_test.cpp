@@ -1,8 +1,11 @@
 #include "ast.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
+#include <algorithm>
 #include <gtest/gtest.h>
+#include <iterator>
 #include <memory>
+#include <ranges>
 #include <variant>
 
 typedef std::variant<long int, std::string, bool> variant;
@@ -508,4 +511,89 @@ TEST(Parser, IfElseExpressionParsing) {
         << "Statements[0] is not an Ast::ExpressionStatement";
 
     testIdentifier(aExpStmt->m_expression, "y");
+}
+
+TEST(Parser, FunctionLiteralParsing) {
+    std::string input = "fn(x, y) { x + y;}";
+
+    Lexer::Lexer l(input);
+    Parser::Parser p(l);
+    Ast::Program program = p.ParseProgram();
+    checkParserErrors(p);
+
+    ASSERT_EQ(program.m_statements.size(), 1)
+        << "program.m_statements does not contain 1 statement. got="
+        << program.m_statements.size();
+
+    Ast::IStatement *iStmt = program.m_statements[0].get();
+    auto stmt = dynamic_cast<Ast::ExpressionStatement *>(iStmt);
+    ASSERT_TRUE(stmt != nullptr)
+        << "program.m_statements[0] is not an AST::ExpressionStatement";
+
+    Ast::IExpression *iExp = stmt->m_expression.get();
+    auto exp = dynamic_cast<Ast::FunctionLiteral *>(iExp);
+    ASSERT_TRUE(exp != nullptr)
+        << "stmt->m_expression is not an FunctionLiteral";
+
+    ASSERT_EQ(std::ssize(exp->m_parameters), 2)
+        << "function literal parameters wrong. want 2. got="
+        << std::ssize(exp->m_parameters);
+
+    variant x("x");
+    variant y("y");
+    std::unique_ptr<Ast::IExpression> xIEepr = std::move(exp->m_parameters[0]);
+    std::unique_ptr<Ast::IExpression> yIExpr = std::move(exp->m_parameters[1]);
+    testLiteralExpression(xIEepr, x);
+    testLiteralExpression(yIExpr, y);
+
+    ASSERT_EQ(std::ssize(exp->m_body->m_statements), 1)
+        << "function body statement does not have 1 statement got="
+        << std::ssize(exp->m_body->m_statements);
+
+    Ast::IStatement *bodyStatement = exp->m_body->m_statements[0].get();
+    auto bodyExp = dynamic_cast<Ast::ExpressionStatement *>(bodyStatement);
+
+    ASSERT_TRUE(bodyExp != nullptr)
+        << "function body stmt is not Ast::ExpressionStatement";
+    testInfixExpression(bodyExp->m_expression.get(), x, "+", y);
+}
+
+TEST(Parser, FunctionParameterParsing) {
+    struct test {
+        std::string input;
+        std::vector<std::string> expectedParams;
+    };
+
+    std::vector<test> tests = {{"fn() {};", {}},
+                               {"fn(x) {};", {"x"}},
+                               {"fn(x, y ,z) {}", {"x", "y", "z"}}};
+
+    for (auto tst : tests) {
+        Lexer::Lexer l(tst.input);
+        Parser::Parser p(l);
+        Ast::Program program = p.ParseProgram();
+        checkParserErrors(p);
+
+        auto stmt = dynamic_cast<Ast::ExpressionStatement *>(
+            program.m_statements[0].get());
+        ASSERT_TRUE(stmt != nullptr);
+
+        auto function =
+            dynamic_cast<Ast::FunctionLiteral *>(stmt->m_expression.get());
+        ASSERT_TRUE(function != nullptr);
+
+        ASSERT_EQ(std::ssize(function->m_parameters),
+                  std::ssize(tst.expectedParams))
+            << "number of parameters wrong. Expected "
+            << std::ssize(tst.expectedParams)
+            << ", got=" << std::ssize(function->m_parameters);
+
+        for (unsigned int i = 0; i < std::ssize(function->m_parameters); i++) {
+            variant expectedParam(tst.expectedParams[i]);
+            auto parameter = dynamic_cast<Ast::IExpression *>(
+                function->m_parameters[i].get());
+
+            testLiteralExpression(std::make_unique(parameter), expectedParam);
+        }
+    }
 }

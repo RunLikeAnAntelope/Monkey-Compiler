@@ -54,7 +54,8 @@ struct Parser {
     std::unique_ptr<Ast::IExpression> parseGroupedExpression();
     std::unique_ptr<Ast::BlockStatement> parseBlockStatement();
     std::unique_ptr<Ast::IExpression> parseIfExpression();
-
+    std::unique_ptr<Ast::IExpression> parseFunctionLiteral();
+    std::vector<std::unique_ptr<Ast::Identifier>> parseFunctionParameters();
     void registerPrefix(Token::TokenType tokenType, prefixParseFn fn);
     void registerInfix(Token::TokenType, infixParseFn fn);
 
@@ -68,6 +69,7 @@ struct Parser {
     std::vector<std::string> Errors();
     void peekError(Token::TokenType t);
     void noPrefixParseFnError(Token::TokenType t);
+    void malformedFunctionParameterListError();
 };
 
 } // namespace Parser

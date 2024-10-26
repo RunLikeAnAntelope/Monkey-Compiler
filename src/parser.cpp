@@ -220,6 +220,48 @@ std::unique_ptr<Ast::IExpression> Parser::parseIfExpression() {
     return expression;
 }
 
+std::unique_ptr<Ast::IExpression> Parser::parseFunctionLiteral() {
+    auto expression = std::make_unique<Ast::FunctionLiteral>(m_curToken);
+    if (!expectPeek(Token::LPAREN)) {
+        return nullptr;
+    }
+
+    expression->m_parameters = parseFunctionParameters();
+
+    if (!expectPeek(Token::RPAREN)) {
+        return nullptr;
+    }
+
+    expression->m_body = parseBlockStatement();
+
+    return expression;
+}
+
+std::vector<std::unique_ptr<Ast::Identifier>>
+Parser::parseFunctionParameters() {
+    std::vector<std::unique_ptr<Ast::Identifier>> identifiers;
+    if (peekTokenIs(Token::RPAREN)) {
+        nextToken();
+        return identifiers;
+    }
+
+    nextToken();
+    identifiers.push_back(
+        std::make_unique<Ast::Identifier>(m_curToken, m_curToken.Literal));
+
+    while (peekTokenIs(Token::COMMA)) {
+        nextToken();
+        nextToken();
+        identifiers.push_back(
+            std::make_unique<Ast::Identifier>(m_curToken, m_curToken.Literal));
+    }
+    if (!expectPeek(Token::RPAREN)) {
+        malformedFunctionParameterListError();
+    }
+
+    return identifiers;
+}
+
 void Parser::registerPrefix(Token::TokenType tokenType, prefixParseFn fn) {
     m_prefixParseFns[tokenType] = fn;
 }
@@ -279,6 +321,10 @@ void Parser::noPrefixParseFnError(Token::TokenType t) {
     std::string msg = "no prefix parse function for " +
                       Token::tokenStringMap.at(t) + " found";
     m_errors.push_back(msg);
+}
+
+void Parser::malformedFunctionParameterListError() {
+    m_errors.push_back("Malformed Function Parameter List Error.");
 }
 
 } // namespace Parser
