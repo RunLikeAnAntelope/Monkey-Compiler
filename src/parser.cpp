@@ -17,6 +17,7 @@ Parser::Parser(Lexer::Lexer &lexer) : m_l(lexer) {
     registerPrefix(Token::FALSE, &Parser::parseBoolean);
     registerPrefix(Token::LPAREN, &Parser::parseGroupedExpression);
     registerPrefix(Token::IF, &Parser::parseIfExpression);
+    registerPrefix(Token::FUNCTION, &Parser::parseFunctionLiteral);
 
     registerInfix(Token::PLUS, &Parser::parseInfixExpression);
     registerInfix(Token::MINUS, &Parser::parseInfixExpression);
@@ -227,8 +228,7 @@ std::unique_ptr<Ast::IExpression> Parser::parseFunctionLiteral() {
     }
 
     expression->m_parameters = parseFunctionParameters();
-
-    if (!expectPeek(Token::RPAREN)) {
+    if (!expectPeek(Token::LBRACE)) {
         return nullptr;
     }
 

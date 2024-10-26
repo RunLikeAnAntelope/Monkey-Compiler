@@ -1,11 +1,9 @@
 #include "ast.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
-#include <algorithm>
 #include <gtest/gtest.h>
 #include <iterator>
 #include <memory>
-#include <ranges>
 #include <variant>
 
 typedef std::variant<long int, std::string, bool> variant;
@@ -27,45 +25,53 @@ void checkParserErrors(Parser::Parser p) {
     }
 }
 
-void testIntegerLiteral(std::unique_ptr<Ast::IExpression> &il, long int value) {
-    auto integ = dynamic_cast<Ast::IntegerLiteral *>(il.get());
-    ASSERT_TRUE(integ != nullptr) << "Not an IntegerLiteral";
+void testIntegerLiteral(Ast::IExpression &il, long int value) {
+    try {
+        auto integ = dynamic_cast<Ast::IntegerLiteral &>(il);
+        ASSERT_EQ(integ.m_value, value)
+            << "integ->m_value not " << value << ". got=" << integ.m_value;
 
-    ASSERT_EQ(integ->m_value, value)
-        << "integ->m_value not " << value << ". got=" << integ->m_value;
+        ASSERT_EQ(integ.TokenLiteral(), std::to_string(value))
+            << "integ->TokenLiteral() not " << value
+            << ". got=" << integ.TokenLiteral();
 
-    ASSERT_EQ(integ->TokenLiteral(), std::to_string(value))
-        << "integ->TokenLiteral() not " << value
-        << ". got=" << integ->TokenLiteral();
+    } catch (const std::bad_cast &e) {
+        FAIL() << "Expression not an IntegerLiteral";
+    }
 }
 
-void testBooleanLiteral(std::unique_ptr<Ast::IExpression> &exp, bool value) {
-    auto boolean = dynamic_cast<Ast::Boolean *>(exp.get());
-    ASSERT_TRUE(boolean != nullptr) << "exp not a boolean value";
+void testBooleanLiteral(Ast::IExpression &exp, bool value) {
+    try {
+        auto boolean = dynamic_cast<Ast::Boolean &>(exp);
 
-    ASSERT_EQ(boolean->m_value, value)
-        << "boolean.value not " << value << ". got=" << boolean->m_value;
+        ASSERT_EQ(boolean.m_value, value)
+            << "boolean.value not " << value << ". got=" << boolean.m_value;
 
-    std::string txtValue = value ? "true" : "false";
-    ASSERT_EQ(boolean->TokenLiteral(), txtValue)
-        << "boolean.TokenLiteral not " << boolean->TokenLiteral()
-        << ". got=" << txtValue;
+        std::string txtValue = value ? "true" : "false";
+        ASSERT_EQ(boolean.TokenLiteral(), txtValue)
+            << "boolean.TokenLiteral not " << boolean.TokenLiteral()
+            << ". got=" << txtValue;
+    } catch (const std::bad_cast &e) {
+        FAIL() << "IExpression not a Boolean";
+    }
 }
 
-void testIdentifier(std::unique_ptr<Ast::IExpression> &exp, std::string value) {
-    auto ident = dynamic_cast<Ast::Identifier *>(exp.get());
-    ASSERT_TRUE(ident != nullptr) << "exp not an identifier";
+void testIdentifier(Ast::IExpression &exp, std::string value) {
+    try {
+        auto ident = dynamic_cast<Ast::Identifier &>(exp);
 
-    ASSERT_EQ(value, ident->m_value)
-        << "ident->value not " << value << "got=" << ident->m_value;
+        ASSERT_EQ(value, ident.m_value)
+            << "ident->value not " << value << "got=" << ident.m_value;
 
-    ASSERT_EQ(value, ident->TokenLiteral())
-        << "ident->TokenLiteral() not " << value
-        << "got=" << ident->TokenLiteral();
+        ASSERT_EQ(value, ident.TokenLiteral())
+            << "ident->TokenLiteral() not " << value
+            << "got=" << ident.TokenLiteral();
+    } catch (const std::bad_cast &e) {
+        FAIL() << "IExpression not a Identifier";
+    }
 }
 
-void testLiteralExpression(std::unique_ptr<Ast::IExpression> &exp,
-                           variant expectedValue) {
+void testLiteralExpression(Ast::IExpression &exp, variant expectedValue) {
     if (std::holds_alternative<long int>(expectedValue)) {
         testIntegerLiteral(exp, std::get<long int>(expectedValue));
     } else if (std::holds_alternative<std::string>(expectedValue)) {
@@ -83,8 +89,8 @@ void testInfixExpression(Ast::IExpression *exp, variant left, std::string op,
     auto opExp = dynamic_cast<Ast::InfixExpression *>(exp);
     ASSERT_TRUE(opExp != nullptr) << "exp is not an InfixExpression";
 
-    testLiteralExpression(opExp->m_left, left);
-    testLiteralExpression(opExp->m_right, right);
+    testLiteralExpression(*opExp->m_left, left);
+    testLiteralExpression(*opExp->m_right, right);
     ASSERT_EQ(opExp->m_op, op)
         << "exp.Operator is not " << op << ". got=" << opExp->m_op;
 }
@@ -118,7 +124,7 @@ TEST(Parser, LetStatements) {
 
         Ast::IStatement *lStmt = stmt.get();
         Ast::LetStatement *letStmt = dynamic_cast<Ast::LetStatement *>(lStmt);
-        testLiteralExpression(letStmt->m_expression, test.expectedValue);
+        testLiteralExpression(*letStmt->m_expression, test.expectedValue);
     }
 }
 
@@ -269,7 +275,7 @@ TEST(Parser, ParsingPrefixExpressions) {
         ASSERT_TRUE(exp != nullptr);
 
         ASSERT_EQ(exp->m_op, test.op);
-        testLiteralExpression(exp->m_right, test.value);
+        testLiteralExpression(*exp->m_right, test.value);
     }
 }
 
@@ -310,9 +316,9 @@ TEST(Parser, ParsingInfixExpressions) {
         auto exp = dynamic_cast<Ast::InfixExpression *>(iExp);
         ASSERT_TRUE(exp != nullptr);
 
-        testLiteralExpression(exp->m_left, test.leftValue);
+        testLiteralExpression(*exp->m_left, test.leftValue);
         ASSERT_EQ(exp->m_op, test.op);
-        testLiteralExpression(exp->m_right, test.rightValue);
+        testLiteralExpression(*exp->m_right, test.rightValue);
         testInfixExpression(iExp, test.leftValue, test.op, test.rightValue);
     }
 }
@@ -455,7 +461,7 @@ TEST(Parser, IfExpressionParsing) {
     ASSERT_TRUE(cExpStmt != nullptr)
         << "Statements[0] is not an Ast::ExpressionStatement";
 
-    testIdentifier(cExpStmt->m_expression, "x");
+    testIdentifier(*cExpStmt->m_expression, "x");
 
     ASSERT_EQ(exp->m_alternative, nullptr) << "exp->Alternative was not null";
 }
@@ -495,7 +501,7 @@ TEST(Parser, IfElseExpressionParsing) {
     ASSERT_TRUE(cExpStmt != nullptr)
         << "Statements[0] is not an Ast::ExpressionStatement";
 
-    testIdentifier(cExpStmt->m_expression, "x");
+    testIdentifier(*cExpStmt->m_expression, "x");
 
     // Set Else Path
     ASSERT_FALSE(exp->m_alternative == nullptr)
@@ -510,7 +516,7 @@ TEST(Parser, IfElseExpressionParsing) {
     ASSERT_TRUE(aExpStmt != nullptr)
         << "Statements[0] is not an Ast::ExpressionStatement";
 
-    testIdentifier(aExpStmt->m_expression, "y");
+    testIdentifier(*aExpStmt->m_expression, "y");
 }
 
 TEST(Parser, FunctionLiteralParsing) {
@@ -541,10 +547,8 @@ TEST(Parser, FunctionLiteralParsing) {
 
     variant x("x");
     variant y("y");
-    std::unique_ptr<Ast::IExpression> xIEepr = std::move(exp->m_parameters[0]);
-    std::unique_ptr<Ast::IExpression> yIExpr = std::move(exp->m_parameters[1]);
-    testLiteralExpression(xIEepr, x);
-    testLiteralExpression(yIExpr, y);
+    testLiteralExpression(*exp->m_parameters[0], x);
+    testLiteralExpression(*exp->m_parameters[1], y);
 
     ASSERT_EQ(std::ssize(exp->m_body->m_statements), 1)
         << "function body statement does not have 1 statement got="
@@ -590,10 +594,8 @@ TEST(Parser, FunctionParameterParsing) {
 
         for (unsigned int i = 0; i < std::ssize(function->m_parameters); i++) {
             variant expectedParam(tst.expectedParams[i]);
-            auto parameter = dynamic_cast<Ast::IExpression *>(
-                function->m_parameters[i].get());
 
-            testLiteralExpression(std::make_unique(parameter), expectedParam);
+            testLiteralExpression(*function->m_parameters[i], expectedParam);
         }
     }
 }
