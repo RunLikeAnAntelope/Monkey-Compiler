@@ -1,7 +1,6 @@
 #include "ast.hpp"
 #include "lexer.hpp"
 #include "token.hpp"
-#include <functional>
 #include <memory>
 #include <unordered_map>
 namespace Parser {
@@ -21,7 +20,8 @@ const std::unordered_map<Token::TokenType, Precedence> precedences = {
     {Token::EQ, EQUALS},      {Token::NOT_EQ, EQUALS},
     {Token::LT, LESSGREATER}, {Token::GT, LESSGREATER},
     {Token::PLUS, SUM},       {Token::MINUS, SUM},
-    {Token::SLASH, PRODUCT},  {Token::ASTERISK, PRODUCT}};
+    {Token::SLASH, PRODUCT},  {Token::ASTERISK, PRODUCT},
+    {Token::LPAREN, CALL}};
 
 struct Parser {
     using prefixParseFn = std::unique_ptr<Ast::IExpression> (Parser::*)();
@@ -34,7 +34,6 @@ struct Parser {
     std::unordered_map<Token::TokenType, prefixParseFn> m_prefixParseFns;
     std::unordered_map<Token::TokenType, infixParseFn> m_infixParseFns;
     std::vector<std::string> m_errors;
-
     Parser(Lexer::Lexer &lexer);
 
     void nextToken();
@@ -56,6 +55,10 @@ struct Parser {
     std::unique_ptr<Ast::IExpression> parseIfExpression();
     std::unique_ptr<Ast::IExpression> parseFunctionLiteral();
     std::vector<std::unique_ptr<Ast::Identifier>> parseFunctionParameters();
+    std::unique_ptr<Ast::IExpression>
+    parseCallExpression(std::unique_ptr<Ast::IExpression> function);
+    std::vector<std::unique_ptr<Ast::IExpression>> parseCallArguments();
+
     void registerPrefix(Token::TokenType tokenType, prefixParseFn fn);
     void registerInfix(Token::TokenType, infixParseFn fn);
 
@@ -70,6 +73,7 @@ struct Parser {
     void peekError(Token::TokenType t);
     void noPrefixParseFnError(Token::TokenType t);
     void malformedFunctionParameterListError();
+    void malformedFunctionCallArgumentsListError();
 };
 
 } // namespace Parser

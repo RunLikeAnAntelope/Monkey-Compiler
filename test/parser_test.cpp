@@ -1,12 +1,17 @@
 #include "ast.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
+#include "gtest/gtest.h"
 #include <gtest/gtest.h>
 #include <iterator>
 #include <memory>
 #include <variant>
 
 typedef std::variant<long int, std::string, bool> variant;
+variant makeVariant(long int x) { return x; }
+variant makeVariant(std::string x) { return x; }
+variant makeVariant(bool x) { return x; }
+
 void testLetStatement(std::unique_ptr<Ast::IStatement> &s, std::string name) {
     Ast::IStatement *stmt = s.get();
     Ast::LetStatement *letStmt = dynamic_cast<Ast::LetStatement *>(stmt);
@@ -20,9 +25,11 @@ void testLetStatement(std::unique_ptr<Ast::IStatement> &s, std::string name) {
 }
 
 void checkParserErrors(Parser::Parser p) {
+    std::string errors;
     for (std::string error : p.m_errors) {
-        ASSERT_TRUE(false) << "ParserError:" << error;
+        errors.append("ParserError:" + error + "\n");
     }
+    ASSERT_EQ(std::ssize(p.m_errors), 0) << errors << std::endl;
 }
 
 void testIntegerLiteral(Ast::IExpression &il, long int value) {
@@ -414,6 +421,18 @@ TEST(Parser, OperatorPrecedenceParsing) {
             "!(true == true)",
             "(!(true == true))",
         },
+        {
+            "a + add(b * c) + d",
+            "((a + add((b * c))) + d)",
+        },
+        {
+            "add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))",
+            "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))",
+        },
+        {
+            "add(a + b + c * d / f + g)",
+            "add((((a + b) + ((c * d) / f)) + g))",
+        },
     };
 
     for (auto test : tests) {
@@ -598,4 +617,37 @@ TEST(Parser, FunctionParameterParsing) {
             testLiteralExpression(*function->m_parameters[i], expectedParam);
         }
     }
+}
+
+TEST(Parser, CallExpressionParsing) {
+    std::string input = "add(1, 2 * 3, 4 + 5)";
+    Lexer::Lexer l(input);
+    Parser::Parser p(l);
+    Ast::Program program = p.ParseProgram();
+    checkParserErrors(p);
+
+    ASSERT_EQ(std::ssize(program.m_statements), 1)
+        << "program.m_statements does not contain 1 statement. got="
+        << std::ssize(program.m_statements);
+
+    auto stmt =
+        dynamic_cast<Ast::ExpressionStatement *>(program.m_statements[0].get());
+    ASSERT_TRUE(stmt != nullptr) << "Statement is not an ExpressionStatement";
+
+    auto exp = dynamic_cast<Ast::CallExpression *>(stmt->m_expression.get());
+    ASSERT_TRUE(exp != nullptr)
+        << "ExpressionStatement is not a CallExpression";
+
+    variant expectedIdentifier("add");
+    testIdentifier(*exp->m_function, "add");
+
+    ASSERT_EQ(std::ssize(exp->m_arguments), 3)
+        << "wrong length of arguments. Expected 3, got="
+        << std::ssize(exp->m_arguments);
+
+    testLiteralExpression(*exp->m_arguments[0], makeVariant((long int)1));
+    testInfixExpression(exp->m_arguments[1].get(), makeVariant((long int)2),
+                        "*", makeVariant((long int)3));
+    testInfixExpression(exp->m_arguments[2].get(), makeVariant((long int)4),
+                        "+", makeVariant((long int)5));
 }

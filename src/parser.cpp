@@ -27,6 +27,7 @@ Parser::Parser(Lexer::Lexer &lexer) : m_l(lexer) {
     registerInfix(Token::NOT_EQ, &Parser::parseInfixExpression);
     registerInfix(Token::LT, &Parser::parseInfixExpression);
     registerInfix(Token::GT, &Parser::parseInfixExpression);
+    registerInfix(Token::LPAREN, &Parser::parseCallExpression);
 }
 
 void Parser::nextToken() {
@@ -262,6 +263,32 @@ Parser::parseFunctionParameters() {
     return identifiers;
 }
 
+std::unique_ptr<Ast::IExpression>
+Parser::parseCallExpression(std::unique_ptr<Ast::IExpression> function) {
+    auto exp =
+        std::make_unique<Ast::CallExpression>(m_curToken, std::move(function));
+    exp->m_arguments = parseCallArguments();
+    return exp;
+}
+
+std::vector<std::unique_ptr<Ast::IExpression>> Parser::parseCallArguments() {
+    std::vector<std::unique_ptr<Ast::IExpression>> args;
+    if (peekTokenIs(Token::RPAREN)) {
+        nextToken();
+        return args;
+    }
+    nextToken();
+    args.push_back(parseExpression(LOWEST));
+    while (peekTokenIs(Token::COMMA)) {
+        nextToken();
+        nextToken();
+        args.push_back(parseExpression(LOWEST));
+    }
+    if (!expectPeek(Token::RPAREN)) {
+        malformedFunctionCallArgumentsListError();
+    }
+    return args;
+}
 void Parser::registerPrefix(Token::TokenType tokenType, prefixParseFn fn) {
     m_prefixParseFns[tokenType] = fn;
 }
@@ -324,6 +351,10 @@ void Parser::noPrefixParseFnError(Token::TokenType t) {
 }
 
 void Parser::malformedFunctionParameterListError() {
+    m_errors.push_back("Malformed Function Parameter List Error.");
+}
+
+void Parser::malformedFunctionCallArgumentsListError() {
     m_errors.push_back("Malformed Function Parameter List Error.");
 }
 

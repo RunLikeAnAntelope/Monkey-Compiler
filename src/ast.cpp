@@ -1,5 +1,6 @@
 #include "ast.hpp"
 #include "helpers.hpp"
+#include <memory>
 
 namespace Ast {
 
@@ -166,7 +167,9 @@ std::string FunctionLiteral::String() {
 std::string FunctionLiteral::TokenLiteral() { return m_token.Literal; }
 
 // Call Expression Stuff
-CallExpression::CallExpression(Token::Token token) : m_token(token) {};
+CallExpression::CallExpression(Token::Token token,
+                               std::unique_ptr<IExpression> function)
+    : m_token(token), m_function(std::move(function)) {}
 
 std::string CallExpression::String() {
     std::string out;
@@ -181,4 +184,5 @@ std::string CallExpression::String() {
     return out;
 }
 
+std::string CallExpression::TokenLiteral() { return m_token.Literal; }
 } // namespace Ast
