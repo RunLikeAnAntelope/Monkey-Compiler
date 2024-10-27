@@ -165,4 +165,20 @@ std::string FunctionLiteral::String() {
 
 std::string FunctionLiteral::TokenLiteral() { return m_token.Literal; }
 
+// Call Expression Stuff
+CallExpression::CallExpression(Token::Token token) : m_token(token) {};
+
+std::string CallExpression::String() {
+    std::string out;
+    std::vector<std::string> arguments;
+    for (auto &str : this->m_arguments) {
+        arguments.push_back(str->String());
+    }
+    out.append(this->m_function->String());
+    out.append("(");
+    out.append(Helpers::combineVecStrWithDelim(arguments, ", "));
+    out.append(")");
+    return out;
+}
+
 } // namespace Ast

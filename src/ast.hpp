@@ -152,4 +152,15 @@ struct FunctionLiteral : public IExpression {
     std::string String() override;
 };
 
+struct CallExpression : public IExpression {
+    Token::Token m_token;                    // the '(' token
+    std::unique_ptr<IExpression> m_function; // Identifier or FunctionLiteral
+    std::vector<std::unique_ptr<IExpression>> m_arguments;
+
+    CallExpression(Token::Token token);
+    void expressionNode() override {};
+    std::string TokenLiteral() override;
+    std::string String() override;
+};
+
 } // namespace Ast
