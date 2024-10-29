@@ -1,7 +1,6 @@
 #include "parser.hpp"
 #include "ast.hpp"
 #include "token.hpp"
-#include <iostream>
 #include <memory>
 #include <stdexcept>
 namespace Parser {
@@ -76,7 +75,7 @@ std::unique_ptr<Ast::LetStatement> Parser::parseLetStatement() {
 
     stmt->m_expression = parseExpression(LOWEST);
 
-    while (!curTokenIs(Token::SEMICOLON)) {
+    if (peekTokenIs(Token::SEMICOLON)) {
         nextToken();
     }
     return stmt;
@@ -85,10 +84,10 @@ std::unique_ptr<Ast::LetStatement> Parser::parseLetStatement() {
 std::unique_ptr<Ast::ReturnStatement> Parser::parseReturnStatement() {
     auto stmt = std::make_unique<Ast::ReturnStatement>(m_curToken);
     nextToken();
-    while (!curTokenIs(Token::SEMICOLON)) {
+    stmt->m_returnValue = parseExpression(LOWEST);
+    if (peekTokenIs(Token::SEMICOLON)) {
         nextToken();
     }
-
     return stmt;
 }
 
@@ -336,7 +335,6 @@ Precedence Parser::curPrecedence() {
 }
 
 std::vector<std::string> Parser::Errors() { return m_errors; }
-
 void Parser::peekError(Token::TokenType t) {
     std::string msg = "Expect next token to be " + Token::tokenStringMap.at(t) +
                       ", got " + Token::tokenStringMap.at(m_peekToken.Type) +

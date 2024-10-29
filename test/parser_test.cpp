@@ -180,6 +180,41 @@ TEST(Parser, ReturnParser) {
     }
 }
 
+TEST(Parser, ReturnStatements) {
+    struct test {
+        std::string input;
+        variant expectedValue;
+    };
+
+    std::vector<test> tests = {
+        {"return 5;", 5}, {"return true;", true}, {"return foobar;", "foobar"}};
+
+    for (auto tst : tests) {
+        Lexer::Lexer l(tst.input);
+        Parser::Parser p(l);
+        Ast::Program program = p.ParseProgram();
+        checkParserErrors(p);
+
+        ASSERT_EQ(program.m_statements.size(), 1)
+            << "program.Statements does not"
+               "contain 1 statements. got "
+            << program.m_statements.size();
+
+        auto returnStmt =
+            dynamic_cast<Ast::ReturnStatement *>(program.m_statements[0].get());
+
+        if (returnStmt == nullptr) {
+            FAIL() << "IStatement is not a ReturnStatement";
+        }
+
+        ASSERT_EQ(returnStmt->TokenLiteral(), "return")
+            << "returnStmt.TokenLiteral not 'return', got "
+            << returnStmt->TokenLiteral();
+
+        testLiteralExpression(*returnStmt->m_returnValue, tst.expectedValue);
+    }
+}
+
 TEST(Parser, IdentifierExpression) {
     std::string input = "foobar;";
     Lexer::Lexer l(input);
