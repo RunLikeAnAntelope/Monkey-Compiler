@@ -6,26 +6,49 @@
 
 namespace Ast {
 
+enum class Type {
+    INODE,
+    ISTATEMENT,
+    IEXPRESSION,
+    PROGRAM,
+    IDENTIFIER,
+    INTEGER_LITERAL,
+    PREFIX_EXPRESSION,
+    INFIX_EXPRESSION,
+    BOOLEAN,
+    BLOCK_STATEMENT,
+    IF_EXPRESSION,
+    LET_STATEMENT,
+    RETURN_STATEMENT,
+    EXPRESSION_STATEMENT,
+    FUNCTION_LITERAL,
+    CALL_EXPRESSION
+};
+
 struct INode {
     virtual ~INode() = default;
     virtual std::string TokenLiteral() = 0;
     virtual std::string String() = 0;
+    virtual Type Type() = 0;
 };
 
 struct IStatement : public INode {
     virtual void statementNode() = 0;
     virtual ~IStatement() = default;
+    virtual enum Type Type() = 0;
 };
 
 struct IExpression : public INode {
     virtual void expressionNode() = 0;
     virtual ~IExpression() = default;
+    virtual enum Type Type() = 0;
 };
 
 struct Program : public INode {
     std::vector<std::unique_ptr<IStatement>> m_statements;
     std::string TokenLiteral() override;
     std::string String() override;
+    enum Type Type() override;
 };
 
 // the x in "let x = 5;". also the x in "let a = x;:"
@@ -37,6 +60,7 @@ struct Identifier : public IExpression {
     std::string TokenLiteral() override;
     void expressionNode() override {};
     std::string String() override;
+    enum Type Type() override;
 };
 
 struct IntegerLiteral : public IExpression {
@@ -47,6 +71,7 @@ struct IntegerLiteral : public IExpression {
     std::string TokenLiteral() override;
     void expressionNode() override {};
     std::string String() override;
+    enum Type Type() override;
 };
 
 struct PrefixExpression : public IExpression {
@@ -58,6 +83,7 @@ struct PrefixExpression : public IExpression {
     std::string TokenLiteral() override;
     void expressionNode() override {};
     std::string String() override;
+    enum Type Type() override;
 };
 
 struct InfixExpression : public IExpression {
@@ -71,6 +97,7 @@ struct InfixExpression : public IExpression {
     void expressionNode() override {};
     std::string TokenLiteral() override;
     std::string String() override;
+    enum Type Type() override;
 };
 
 struct Boolean : public IExpression {
@@ -81,6 +108,7 @@ struct Boolean : public IExpression {
     std::string TokenLiteral() override;
     void expressionNode() override {};
     std::string String() override;
+    enum Type Type() override;
 };
 
 // Unhappy I need to order this way. Might be better to have seperate files for
@@ -94,6 +122,7 @@ struct BlockStatement : public IStatement {
     std::string TokenLiteral() override;
     void statementNode() override {};
     std::string String() override;
+    enum Type Type() override;
 };
 
 struct IfExpression : public IExpression {
@@ -106,6 +135,7 @@ struct IfExpression : public IExpression {
     void expressionNode() override {};
     std::string TokenLiteral() override;
     std::string String() override;
+    enum Type Type() override;
 };
 
 struct LetStatement : public IStatement {
@@ -118,6 +148,7 @@ struct LetStatement : public IStatement {
     std::string TokenLiteral() override;
     void statementNode() override {};
     std::string String() override;
+    enum Type Type() override;
 };
 
 struct ReturnStatement : public IStatement {
@@ -128,6 +159,7 @@ struct ReturnStatement : public IStatement {
     std::string TokenLiteral() override;
     void statementNode() override {};
     std::string String() override;
+    enum Type Type() override;
 };
 
 struct ExpressionStatement : public IStatement {
@@ -139,6 +171,7 @@ struct ExpressionStatement : public IStatement {
     std::string TokenLiteral() override;
     void statementNode() override {};
     std::string String() override;
+    enum Type Type() override;
 };
 
 struct FunctionLiteral : public IExpression {
@@ -150,6 +183,7 @@ struct FunctionLiteral : public IExpression {
     void expressionNode() override {};
     std::string TokenLiteral() override;
     std::string String() override;
+    enum Type Type() override;
 };
 
 struct CallExpression : public IExpression {
@@ -161,6 +195,7 @@ struct CallExpression : public IExpression {
     void expressionNode() override {};
     std::string TokenLiteral() override;
     std::string String() override;
+    enum Type Type() override;
 };
 
 } // namespace Ast

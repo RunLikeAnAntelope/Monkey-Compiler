@@ -4,6 +4,23 @@
 
 namespace Ast {
 
+// All the type stuff in the same place
+Type INode::Type() { return Type::INODE; }
+Type IExpression::Type() { return Type::IEXPRESSION; }
+Type Program::Type() { return Type::PROGRAM; }
+Type Identifier::Type() { return Type::IDENTIFIER; }
+Type IntegerLiteral::Type() { return Type::INTEGER_LITERAL; }
+Type PrefixExpression::Type() { return Type::PREFIX_EXPRESSION; }
+Type InfixExpression::Type() { return Type::INFIX_EXPRESSION; }
+Type Boolean::Type() { return Type::BOOLEAN; }
+Type BlockStatement::Type() { return Type::BLOCK_STATEMENT; }
+Type IfExpression::Type() { return Type::IF_EXPRESSION; }
+Type LetStatement::Type() { return Type::LET_STATEMENT; }
+Type ReturnStatement::Type() { return Type::RETURN_STATEMENT; }
+Type ExpressionStatement::Type() { return Type::EXPRESSION_STATEMENT; }
+Type FunctionLiteral::Type() { return Type::FUNCTION_LITERAL; }
+Type CallExpression::Type() { return Type::CALL_EXPRESSION; }
+
 // Program stuff
 std::string Program::TokenLiteral() {
     if (m_statements.size() > 0) {

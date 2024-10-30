@@ -1,13 +1,16 @@
 #include "evaluator.hpp"
 #include "object.hpp"
+#include <cassert>
 namespace Evaluator {
-template <typename T>
-    : std::unique_ptr<Object::IObject> Eval(std::unique_ptr<Ast::INode> node) {
+
+std::unique_ptr<Object::IObject> Eval(std::unique_ptr<Ast::INode> node) {
+    assert(node.get() != nullptr);
     auto integer = dynamic_cast<Ast::IntegerLiteral *>(node.get());
     if (integer != nullptr) {
         return std::make_unique<Object::Integer>(
             Object::Integer(integer->m_value));
     }
+    return nullptr;
 }
 
 } // namespace Evaluator

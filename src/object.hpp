@@ -9,6 +9,7 @@ const std::string NULL_OBJ = "NULL";
 struct IObject {
     virtual ObjectType Type() = 0;
     virtual std::string Inspect() = 0;
+    virtual ~IObject() = default;
 };
 
 struct Integer : public IObject {

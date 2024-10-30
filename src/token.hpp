@@ -1,15 +1,40 @@
 #pragma once
 #include <string>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 namespace Token {
 
+// typedef std::string TokenType;
 
-//typedef std::string TokenType;
-
-enum TokenType {ILLEGAL, EOF_, IDENT, INT, ASSIGN, PLUS, MINUS, BANG, ASTERISK, SLASH, LT, GT, EQ, NOT_EQ, COMMA, SEMICOLON, LPAREN, RPAREN, LBRACE, RBRACE, FUNCTION, LET, TRUE, FALSE, IF, ELSE, RETURN};
-
-
+enum TokenType {
+    ILLEGAL,
+    EOF_,
+    IDENT,
+    INT,
+    ASSIGN,
+    PLUS,
+    MINUS,
+    BANG,
+    ASTERISK,
+    SLASH,
+    LT,
+    GT,
+    EQ,
+    NOT_EQ,
+    COMMA,
+    SEMICOLON,
+    LPAREN,
+    RPAREN,
+    LBRACE,
+    RBRACE,
+    FUNCTION,
+    LET,
+    TRUE,
+    FALSE,
+    IF,
+    ELSE,
+    RETURN
+};
 
 struct Token {
     TokenType Type;
@@ -21,42 +46,41 @@ struct StringTok {
     TokenType Type;
 };
 
-const std::vector<StringTok> strToTok = {
-    {"ILLEGAL", ILLEGAL},
-    {"EOF", EOF_},
+const std::vector<StringTok> strToTok = {{"ILLEGAL", ILLEGAL},
+                                         {"EOF", EOF_},
 
-    // identifiers + literals
-    {"IDENT", IDENT},
-    {"INT", INT},
+                                         // identifiers + literals
+                                         {"IDENT", IDENT},
+                                         {"INT", INT},
 
-    // Operators
-    {"=", ASSIGN},
-    {"+", PLUS},
-    {"-", MINUS},
-    {"!", BANG},
-    {"*", ASTERISK},
-    {"/", SLASH},
-    {"<", LT},
-    {">", GT},
-    {"=", EQ},
-    {"!=", NOT_EQ},
+                                         // Operators
+                                         {"=", ASSIGN},
+                                         {"+", PLUS},
+                                         {"-", MINUS},
+                                         {"!", BANG},
+                                         {"*", ASTERISK},
+                                         {"/", SLASH},
+                                         {"<", LT},
+                                         {">", GT},
+                                         {"=", EQ},
+                                         {"!=", NOT_EQ},
 
-    // delimiters
-    {",", COMMA},
-    {";", SEMICOLON},
-    {"(", LPAREN},
-    {")", RPAREN},
-    {"{", LBRACE},
-    {"}", RBRACE},
-    
-    // Keywords
-    {"FUNCTION", FUNCTION},
-    {"LET", LET},
-    {"TRUE", TRUE},
-    {"FALSE", FALSE},
-    {"IF", IF},
-    {"ELSE", ELSE},
-    {"RETURN", RETURN}
+                                         // delimiters
+                                         {",", COMMA},
+                                         {";", SEMICOLON},
+                                         {"(", LPAREN},
+                                         {")", RPAREN},
+                                         {"{", LBRACE},
+                                         {"}", RBRACE},
+
+                                         // Keywords
+                                         {"FUNCTION", FUNCTION},
+                                         {"LET", LET},
+                                         {"TRUE", TRUE},
+                                         {"FALSE", FALSE},
+                                         {"IF", IF},
+                                         {"ELSE", ELSE},
+                                         {"RETURN", RETURN}
 
 };
 
@@ -64,7 +88,8 @@ std::unordered_map<std::string, TokenType> vecToTokenMap();
 std::unordered_map<TokenType, std::string> vecToTokenStringMap();
 
 const std::unordered_map<std::string, TokenType> tokenMap = vecToTokenMap();
-const std::unordered_map<TokenType, std::string> tokenStringMap = vecToTokenStringMap(); 
+const std::unordered_map<TokenType, std::string> tokenStringMap =
+    vecToTokenStringMap();
 //     {"ILLEGAL", ILLEGAL},
 //     {"EOF", EOF_},
 //
@@ -91,7 +116,7 @@ const std::unordered_map<TokenType, std::string> tokenStringMap = vecToTokenStri
 //     {")", RPAREN},
 //     {"{", LBRACE},
 //     {"}", RBRACE},
-//     
+//
 //     // Keywords
 //     {"FUNCTION", FUNCTION},
 //     {"LET", LET},
@@ -101,7 +126,6 @@ const std::unordered_map<TokenType, std::string> tokenStringMap = vecToTokenStri
 //     {"ELSE", ELSE},
 //     {"RETURN", RETURN}
 // };
-
 
 /*
 const TokenType ILLEGAL = "ILLEGAL";
@@ -141,16 +165,9 @@ const TokenType ELSE = "ELSE";
 const TokenType RETURN = "RETURN";
 */
 const std::unordered_map<std::string, TokenType> keywords = {
-    {"fn", FUNCTION},
-    {"let", LET},
-    {"true", TRUE},
-    {"false", FALSE},
-    {"if", IF},
-    {"else", ELSE},
-    {"return", RETURN}
-};
+    {"fn", FUNCTION}, {"let", LET},   {"true", TRUE},    {"false", FALSE},
+    {"if", IF},       {"else", ELSE}, {"return", RETURN}};
 
 TokenType LookupIdent(std::string ident);
-
 
 } // namespace Token
