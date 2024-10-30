@@ -38,12 +38,15 @@ set(SOURCES
     "src/helpers.cpp"
     "src/object.hpp"
     "src/object.cpp"
+    "src/evaluator.hpp"
+    "src/evaluator.cpp"
 )
 
 set(TESTS
     "test/ast_test.cpp"
     "test/tests.cpp"
     "test/parser_test.cpp"
+    "test/evaluator_test.cpp"
 )
 
 
