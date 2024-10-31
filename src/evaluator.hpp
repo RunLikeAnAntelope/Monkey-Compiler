@@ -5,6 +5,9 @@
 
 namespace Evaluator {
 
-std::unique_ptr<Object::IObject> Eval(std::unique_ptr<Ast::INode> node);
+std::unique_ptr<Object::IObject>
+evalStatements(std::vector<std::unique_ptr<Ast::IStatement>> &stmts);
+
+std::unique_ptr<Object::IObject> Eval(Ast::INode *node);
 
 } // namespace Evaluator
