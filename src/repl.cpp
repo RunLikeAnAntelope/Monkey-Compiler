@@ -1,8 +1,10 @@
 #include "repl.hpp"
 #include "ast.hpp"
+#include "evaluator.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
 #include <iostream>
+
 namespace Repl {
 void Start() {
 
@@ -18,7 +20,10 @@ void Start() {
             printParserErrors(p.Errors());
             continue;
         }
-        std::cout << program.String() << std::endl;
+        auto evaluated = Evaluator::Eval(&program);
+        if (evaluated != nullptr && evaluated.get() != nullptr) {
+            std::cout << evaluated.get()->Inspect() << std::endl;
+        }
     }
 }
 
