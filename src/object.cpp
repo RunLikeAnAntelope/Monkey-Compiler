@@ -8,9 +8,9 @@ ObjectType Integer::Type() { return INTEGER_OBJ; }
 std::string Integer::Inspect() { return std::to_string(m_value); }
 
 // boolean
-Boolean::Boolean(long int value) : m_value(value) {}
+Boolean::Boolean(bool value) : m_value(value) {}
 ObjectType Boolean::Type() { return BOOLEAN_OBJ; }
-std::string Boolean::Inspect() { return std::to_string(m_value); }
+std::string Boolean::Inspect() { return m_value ? "true" : "false"; }
 
 // null
 ObjectType Null::Type() { return NULL_OBJ; }

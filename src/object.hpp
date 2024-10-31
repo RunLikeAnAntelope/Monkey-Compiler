@@ -21,7 +21,7 @@ struct Integer : public IObject {
 
 struct Boolean : public IObject {
     bool m_value;
-    Boolean(long int value);
+    Boolean(bool value);
     ObjectType Type() override;
     std::string Inspect() override;
 };

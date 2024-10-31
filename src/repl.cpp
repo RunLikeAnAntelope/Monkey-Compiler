@@ -20,7 +20,8 @@ void Start() {
             printParserErrors(p.Errors());
             continue;
         }
-        auto evaluated = Evaluator::Eval(&program);
+        Evaluator::Evaluator evaluator;
+        auto evaluated = evaluator.Eval(&program);
         if (evaluated != nullptr && evaluated.get() != nullptr) {
             std::cout << evaluated.get()->Inspect() << std::endl;
         }

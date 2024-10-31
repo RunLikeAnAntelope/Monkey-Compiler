@@ -2,9 +2,10 @@
 #include "ast.hpp"
 #include "object.hpp"
 #include <cassert>
+#include <memory>
 namespace Evaluator {
 
-std::unique_ptr<Object::IObject> Eval(Ast::INode *node) {
+std::unique_ptr<Object::IObject> Evaluator::Eval(Ast::INode *node) {
     if (node == nullptr) {
         return nullptr;
     }
@@ -21,12 +22,16 @@ std::unique_ptr<Object::IObject> Eval(Ast::INode *node) {
         auto integer = dynamic_cast<Ast::IntegerLiteral *>(node);
         return (std::make_unique<Object::Integer>(integer->m_value));
     }
+    case Ast::Type::BOOLEAN: {
+        auto boolean = dynamic_cast<Ast::Boolean *>(node);
+        return (boolean->m_value ? std::move(TRUE) : std::move(FALSE));
+    }
     }
     return nullptr;
 }
 
-std::unique_ptr<Object::IObject>
-evalStatements(std::vector<std::unique_ptr<Ast::IStatement>> &stmts) {
+std::unique_ptr<Object::IObject> Evaluator::evalStatements(
+    std::vector<std::unique_ptr<Ast::IStatement>> &stmts) {
     std::unique_ptr<Object::IObject> result;
     for (auto &statement : stmts) {
         result = Eval(statement.get());
