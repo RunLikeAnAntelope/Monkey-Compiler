@@ -1,11 +1,7 @@
 #pragma once
 #include <string>
 namespace Object {
-
-typedef std::string ObjectType;
-const std::string INTEGER_OBJ = "INTEGER";
-const std::string BOOLEAN_OBJ = "BOOLEAN";
-const std::string NULL_OBJ = "NULL";
+enum class ObjectType { INTEGER_OBJ, BOOLEAN_OBJ, NULL_OBJ };
 struct IObject {
     virtual ObjectType Type() = 0;
     virtual std::string Inspect() = 0;

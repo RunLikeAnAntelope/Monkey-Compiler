@@ -24,7 +24,12 @@ std::unique_ptr<Object::IObject> Evaluator::Eval(Ast::INode *node) {
     }
     case Ast::Type::BOOLEAN: {
         auto boolean = dynamic_cast<Ast::Boolean *>(node);
-        return (boolean->m_value ? std::move(TRUE) : std::move(FALSE));
+        return (std::make_unique<Object::Boolean>(boolean->m_value));
+    }
+    case Ast::Type::PREFIX_EXPRESSION: {
+        auto prefixExpr = dynamic_cast<Ast::PrefixExpression *>(node);
+        auto right = Eval(prefixExpr->m_right.get());
+        return evalPrefixExpression(prefixExpr->m_op, std::move(right));
     }
     }
     return nullptr;
@@ -37,6 +42,46 @@ std::unique_ptr<Object::IObject> Evaluator::evalStatements(
         result = Eval(statement.get());
     }
     return result;
+}
+
+std::unique_ptr<Object::IObject>
+Evaluator::evalPrefixExpression(std::string op,
+                                std::unique_ptr<Object::IObject> right) {
+    if (op == "!") {
+        return evalBangOperatorExpression(right.get());
+    } else if (op == "-") {
+        return evalMinusPrefixOperatorExpression(right.get());
+    } else {
+        return nullptr;
+    }
+}
+
+std::unique_ptr<Object::IObject>
+Evaluator::evalBangOperatorExpression(Object::IObject *right) {
+    if (right->Type() == Object::ObjectType::BOOLEAN_OBJ) {
+        auto boolean = dynamic_cast<Object::Boolean *>(right);
+        if (boolean->m_value) {
+            return std::make_unique<Object::Boolean>(false);
+        } else {
+
+            return std::make_unique<Object::Boolean>(true);
+        }
+    }
+
+    if (right->Type() == Object::ObjectType::NULL_OBJ) {
+        return std::make_unique<Object::Boolean>(true);
+    }
+
+    return std::make_unique<Object::Boolean>(false);
+}
+
+std::unique_ptr<Object::IObject>
+Evaluator::evalMinusPrefixOperatorExpression(Object::IObject *right) {
+    if (right->Type() != Object::ObjectType::INTEGER_OBJ) {
+        return std::make_unique<Object::Null>();
+    }
+    auto value = dynamic_cast<Object::Integer *>(right)->m_value;
+    return std::make_unique<Object::Integer>(-value);
 }
 
 } // namespace Evaluator

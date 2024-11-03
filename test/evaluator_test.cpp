@@ -37,7 +37,7 @@ TEST(Evaluator, EvalIntegerExpression) {
         const long int expected;
     };
 
-    std::vector<test> tests = {{"5", 5}, {"10", 10}};
+    std::vector<test> tests = {{"5", 5}, {"10", 10}, {"-5", -5}, {"-10", -10}};
 
     for (auto tt : tests) {
         auto evaluated = testEval(tt.input);
@@ -51,6 +51,20 @@ TEST(Evaluator, EvalBooleanExpression) {
         const bool expected;
     };
     std::vector<test> tests = {{"true", true}, {"false", false}};
+    for (auto tst : tests) {
+        auto evaluated = testEval(tst.input);
+        testBooleanObject(evaluated.get(), tst.expected);
+    }
+}
+
+TEST(Evaluator, BangOperator) {
+    struct test {
+        const std::string input;
+        const bool expected;
+    };
+    std::vector<test> tests{{"!true", false},   {"!false", true},
+                            {"!5", false},      {"!!true", true},
+                            {"!!false", false}, {"!!5", true}};
     for (auto tst : tests) {
         auto evaluated = testEval(tst.input);
         testBooleanObject(evaluated.get(), tst.expected);

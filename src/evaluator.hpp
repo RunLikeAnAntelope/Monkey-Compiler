@@ -9,15 +9,18 @@ class Evaluator {
     std::unique_ptr<Object::IObject> Eval(Ast::INode *node);
 
   private:
-    std::unique_ptr<Object::IObject> TRUE =
-        std::make_unique<Object::Boolean>(true);
-    std::unique_ptr<Object::IObject> FALSE =
-        std::make_unique<Object::Boolean>(false);
-    std::unique_ptr<Object::IObject> NULL_OBJ =
-        std::make_unique<Object::Null>();
-
     std::unique_ptr<Object::IObject>
     evalStatements(std::vector<std::unique_ptr<Ast::IStatement>> &stmts);
+
+    std::unique_ptr<Object::IObject>
+    evalPrefixExpression(std::string op,
+                         std::unique_ptr<Object::IObject> right);
+
+    std::unique_ptr<Object::IObject>
+    evalBangOperatorExpression(Object::IObject *right);
+
+    std::unique_ptr<Object::IObject>
+    evalMinusPrefixOperatorExpression(Object::IObject *right);
 };
 
 } // namespace Evaluator
