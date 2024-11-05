@@ -62,7 +62,7 @@ const std::vector<StringTok> strToTok = {{"ILLEGAL", ILLEGAL},
                                          {"/", SLASH},
                                          {"<", LT},
                                          {">", GT},
-                                         {"=", EQ},
+                                         {"==", EQ},
                                          {"!=", NOT_EQ},
 
                                          // delimiters

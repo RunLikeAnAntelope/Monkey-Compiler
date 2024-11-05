@@ -4,6 +4,7 @@
 #include <memory>
 
 namespace Evaluator {
+
 class Evaluator {
   public:
     std::unique_ptr<Object::IObject> Eval(Ast::INode *node);
@@ -21,6 +22,14 @@ class Evaluator {
 
     std::unique_ptr<Object::IObject>
     evalMinusPrefixOperatorExpression(Object::IObject *right);
+
+    std::unique_ptr<Object::IObject> evalInfixExpression(std::string op,
+                                                         Object::IObject *right,
+                                                         Object::IObject *left);
+
+    std::unique_ptr<Object::IObject>
+    evalIntegerInfixExpression(std::string op, Object::IObject *right,
+                               Object::IObject *left);
 };
 
 } // namespace Evaluator

@@ -1,6 +1,7 @@
 #include "evaluator.hpp"
 #include "ast.hpp"
 #include "object.hpp"
+#include "token.hpp"
 #include <cassert>
 #include <memory>
 namespace Evaluator {
@@ -31,8 +32,15 @@ std::unique_ptr<Object::IObject> Evaluator::Eval(Ast::INode *node) {
         auto right = Eval(prefixExpr->m_right.get());
         return evalPrefixExpression(prefixExpr->m_op, std::move(right));
     }
+    case Ast::Type::INFIX_EXPRESSION: {
+        auto infixExpr = dynamic_cast<Ast::InfixExpression *>(node);
+        auto left = Eval(infixExpr->m_left.get());
+        auto right = Eval(infixExpr->m_right.get());
+        return evalInfixExpression(infixExpr->m_op, left.get(), right.get());
     }
-    return nullptr;
+    default:
+        return nullptr;
+    }
 }
 
 std::unique_ptr<Object::IObject> Evaluator::evalStatements(
@@ -52,7 +60,7 @@ Evaluator::evalPrefixExpression(std::string op,
     } else if (op == "-") {
         return evalMinusPrefixOperatorExpression(right.get());
     } else {
-        return nullptr;
+        return std::make_unique<Object::Null>();
     }
 }
 
@@ -82,6 +90,51 @@ Evaluator::evalMinusPrefixOperatorExpression(Object::IObject *right) {
     }
     auto value = dynamic_cast<Object::Integer *>(right)->m_value;
     return std::make_unique<Object::Integer>(-value);
+}
+
+std::unique_ptr<Object::IObject>
+Evaluator::evalInfixExpression(std::string op, Object::IObject *left,
+                               Object::IObject *right) {
+    if (left->Type() == Object::ObjectType::INTEGER_OBJ &&
+        right->Type() == Object::ObjectType::INTEGER_OBJ) {
+        return evalIntegerInfixExpression(op, left, right);
+    } else {
+        return std::make_unique<Object::Null>();
+    }
+}
+
+std::unique_ptr<Object::IObject>
+Evaluator::evalIntegerInfixExpression(std::string op, Object::IObject *left,
+                                      Object::IObject *right) {
+    auto leftVal = dynamic_cast<Object::Integer *>(left)->m_value;
+    auto rightVal = dynamic_cast<Object::Integer *>(right)->m_value;
+    auto opIter = Token::tokenMap.find(op);
+
+    if (opIter != Token::tokenMap.end()) {
+        switch (opIter->second) {
+        case Token::PLUS:
+            return std::make_unique<Object::Integer>(leftVal + rightVal);
+        case Token::MINUS:
+            return std::make_unique<Object::Integer>(leftVal - rightVal);
+        case Token::ASTERISK:
+            return std::make_unique<Object::Integer>(leftVal * rightVal);
+        case Token::SLASH:
+            return std::make_unique<Object::Integer>(leftVal / rightVal);
+        case Token::LT:
+            return std::make_unique<Object::Boolean>(leftVal < rightVal);
+        case Token::GT:
+            return std::make_unique<Object::Boolean>(leftVal > rightVal);
+        case Token::EQ:
+            return std::make_unique<Object::Boolean>(leftVal == rightVal);
+        case Token::NOT_EQ:
+            return std::make_unique<Object::Boolean>(leftVal != rightVal);
+        default:
+            // left blank on purpose
+            break;
+        }
+    }
+
+    return std::make_unique<Object::Null>();
 }
 
 } // namespace Evaluator
