@@ -1,4 +1,5 @@
 #include "ast.hpp"
+#include "common.hpp"
 #include "evaluator.hpp"
 #include "lexer.hpp"
 #include "object.hpp"
@@ -6,6 +7,9 @@
 
 #include <format>
 #include <gtest/gtest.h>
+#include <memory>
+#include <variant>
+using Common::variant;
 
 std::unique_ptr<Object::IObject> testEval(const std::string input) {
     Lexer::Lexer l(input);
@@ -17,7 +21,9 @@ std::unique_ptr<Object::IObject> testEval(const std::string input) {
 
 void testIntegerObject(Object::IObject *object, const long int expected) {
     auto intObj = dynamic_cast<Object::Integer *>(object);
-    ASSERT_NE(intObj, nullptr) << " object is not an Integer";
+    ASSERT_NE(intObj, nullptr)
+        << std::format("object is not an Integer, got a {}",
+                       Object::objectTypeToStr(object->Type()));
     ASSERT_EQ(intObj->m_value, expected)
         << std::format("object has wrong value. got {}, expected {}",
                        intObj->m_value, expected);
@@ -25,10 +31,17 @@ void testIntegerObject(Object::IObject *object, const long int expected) {
 
 void testBooleanObject(Object::IObject *object, const bool expected) {
     auto boolObj = dynamic_cast<Object::Boolean *>(object);
-    ASSERT_NE(boolObj, nullptr) << "object is not a Boolean";
+    ASSERT_NE(boolObj, nullptr)
+        << std::format("object is not a Boolean, got a {}",
+                       Object::objectTypeToStr(object->Type()));
     ASSERT_EQ(boolObj->m_value, expected)
         << std::format("object has wrong value, got {}, expected {}",
                        boolObj->m_value, expected);
+}
+
+void testNullObject(Object::IObject *object) {
+    ASSERT_TRUE(object->Type() == Object::ObjectType::NULL_OBJ) << std::format(
+        "object is not NULL, got {}", Object::objectTypeToStr(object->Type()));
 }
 
 TEST(Evaluator, EvalIntegerExpression) {
@@ -57,6 +70,7 @@ TEST(Evaluator, EvalIntegerExpression) {
 
     for (auto tt : tests) {
         auto evaluated = testEval(tt.input);
+        ASSERT_NE(evaluated, nullptr);
         testIntegerObject(evaluated.get(), tt.expected);
     }
 }
@@ -89,6 +103,7 @@ TEST(Evaluator, EvalBooleanExpression) {
     };
     for (auto tst : tests) {
         auto evaluated = testEval(tst.input);
+        ASSERT_NE(evaluated, nullptr);
         testBooleanObject(evaluated.get(), tst.expected);
     }
 }
@@ -103,6 +118,35 @@ TEST(Evaluator, BangOperator) {
                             {"!!false", false}, {"!!5", true}};
     for (auto tst : tests) {
         auto evaluated = testEval(tst.input);
+        ASSERT_NE(evaluated, nullptr);
         testBooleanObject(evaluated.get(), tst.expected);
+    }
+}
+
+TEST(Evaluator, IfElseExpression) {
+    struct test {
+        const std::string input;
+        const variant expected;
+    };
+
+    std::vector<test> tests = {
+        {"if (true) { 10 }", 10},
+        {"if (false) { 10 }", std::monostate()},
+        {"if (1) { 10 }", 10},
+        {"if (1 < 2) { 10 }", 10},
+        {"if (1 > 2) { 10 }", std::monostate()},
+        {"if (1 > 2) { 10 } else { 20 }", 20},
+        {"if (1 < 2) { 10 } else { 20 }", 10},
+    };
+
+    for (auto tst : tests) {
+        auto evaluated = testEval(tst.input);
+        ASSERT_NE(evaluated, nullptr);
+        if (std::holds_alternative<long int>(tst.expected)) {
+            testIntegerObject(evaluated.get(),
+                              std::get<long int>(tst.expected));
+        } else {
+            testNullObject(evaluated.get());
+        }
     }
 }

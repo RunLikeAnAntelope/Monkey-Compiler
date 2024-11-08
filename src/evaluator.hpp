@@ -30,6 +30,11 @@ class Evaluator {
     std::unique_ptr<Object::IObject>
     evalIntegerInfixExpression(std::string op, Object::IObject *right,
                                Object::IObject *left);
+
+    bool isTruthy(const Object::IObject *const obj) const;
+
+    std::unique_ptr<Object::IObject>
+    evalIfExpression(const Ast::IfExpression *const ie);
 };
 
 } // namespace Evaluator

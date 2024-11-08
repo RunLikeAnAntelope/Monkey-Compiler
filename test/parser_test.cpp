@@ -1,16 +1,11 @@
 #include "ast.hpp"
+#include "common.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
 #include <gtest/gtest.h>
 #include <iterator>
 #include <memory>
-#include <variant>
-
-typedef std::variant<long int, std::string, bool> variant;
-variant makeVariant(long int x) { return x; }
-variant makeVariant(std::string x) { return x; }
-variant makeVariant(bool x) { return x; }
-
+using Common::variant;
 void testLetStatement(std::unique_ptr<Ast::IStatement> &s, std::string name) {
     Ast::IStatement *stmt = s.get();
     Ast::LetStatement *letStmt = dynamic_cast<Ast::LetStatement *>(stmt);
@@ -679,9 +674,7 @@ TEST(Parser, CallExpressionParsing) {
         << "wrong length of arguments. Expected 3, got="
         << std::ssize(exp->m_arguments);
 
-    testLiteralExpression(*exp->m_arguments[0], makeVariant((long int)1));
-    testInfixExpression(exp->m_arguments[1].get(), makeVariant((long int)2),
-                        "*", makeVariant((long int)3));
-    testInfixExpression(exp->m_arguments[2].get(), makeVariant((long int)4),
-                        "+", makeVariant((long int)5));
+    testLiteralExpression(*exp->m_arguments[0], 1);
+    testInfixExpression(exp->m_arguments[1].get(), 2, "*", 3);
+    testInfixExpression(exp->m_arguments[2].get(), 4, "+", 5);
 }

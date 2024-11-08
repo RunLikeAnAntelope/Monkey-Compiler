@@ -40,6 +40,7 @@ set(SOURCES
     "src/object.cpp"
     "src/evaluator.hpp"
     "src/evaluator.cpp"
+    "src/common.hpp"
 )
 
 set(TESTS

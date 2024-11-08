@@ -38,6 +38,15 @@ std::unique_ptr<Object::IObject> Evaluator::Eval(Ast::INode *node) {
         auto right = Eval(infixExpr->m_right.get());
         return evalInfixExpression(infixExpr->m_op, left.get(), right.get());
     }
+    case Ast::Type::BLOCK_STATEMENT: {
+        auto blockStmt = dynamic_cast<Ast::BlockStatement *>(node);
+        return evalStatements(blockStmt->m_statements);
+    }
+    case Ast::Type::IF_EXPRESSION: {
+        auto ifStmt = dynamic_cast<Ast::IfExpression *>(node);
+        return evalIfExpression(ifStmt);
+    }
+
     default:
         return nullptr;
     }
@@ -153,6 +162,35 @@ Evaluator::evalIntegerInfixExpression(std::string op, Object::IObject *left,
         }
     }
     return std::make_unique<Object::Null>();
+}
+
+bool Evaluator::isTruthy(const Object::IObject *const obj) const {
+    switch (obj->Type()) {
+    case Object::ObjectType::NULL_OBJ:
+        return false;
+    case Object::ObjectType::BOOLEAN_OBJ: {
+        auto boolObj = dynamic_cast<const Object::Boolean *>(obj);
+        if (boolObj->m_value) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    default:
+        return true;
+    }
+}
+
+std::unique_ptr<Object::IObject>
+Evaluator::evalIfExpression(const Ast::IfExpression *const ie) {
+    auto condition = Eval(ie->m_condition.get());
+    if (isTruthy(condition.get())) {
+        return Eval(ie->m_consequence.get());
+    } else if (ie->m_alternative != nullptr) {
+        return Eval(ie->m_alternative.get());
+    } else {
+        return std::make_unique<Object::Null>();
+    }
 }
 
 } // namespace Evaluator
