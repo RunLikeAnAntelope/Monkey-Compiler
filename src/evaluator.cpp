@@ -98,9 +98,28 @@ Evaluator::evalInfixExpression(std::string op, Object::IObject *left,
     if (left->Type() == Object::ObjectType::INTEGER_OBJ &&
         right->Type() == Object::ObjectType::INTEGER_OBJ) {
         return evalIntegerInfixExpression(op, left, right);
-    } else {
+    }
+
+    auto leftPtr = dynamic_cast<Object::Boolean *>(left);
+    auto rightPtr = dynamic_cast<Object::Boolean *>(right);
+    if (leftPtr == nullptr || rightPtr == nullptr) {
         return std::make_unique<Object::Null>();
     }
+
+    auto leftVal = leftPtr->m_value;
+    auto rightVal = rightPtr->m_value;
+    if (Token::tokenMap.find(op) != Token::tokenMap.end()) {
+        switch (Token::tokenMap.at(op)) {
+        case Token::EQ:
+            return std::make_unique<Object::Boolean>(leftVal == rightVal);
+        case Token::NOT_EQ:
+            return std::make_unique<Object::Boolean>(leftVal != rightVal);
+        default:
+            return std::make_unique<Object::Null>();
+        }
+    }
+
+    return std::make_unique<Object::Null>();
 }
 
 std::unique_ptr<Object::IObject>
@@ -133,7 +152,6 @@ Evaluator::evalIntegerInfixExpression(std::string op, Object::IObject *left,
             break;
         }
     }
-
     return std::make_unique<Object::Null>();
 }
 
