@@ -1,7 +1,8 @@
 #pragma once
+#include <memory>
 #include <string>
 namespace Object {
-enum class ObjectType { INTEGER_OBJ, BOOLEAN_OBJ, NULL_OBJ };
+enum class ObjectType { INTEGER_OBJ, BOOLEAN_OBJ, NULL_OBJ, RETURN_VALUE_OBJ };
 std::string objectTypeToStr(ObjectType type);
 struct IObject {
     virtual ObjectType Type() const = 0;
@@ -24,6 +25,13 @@ struct Boolean : public IObject {
 };
 
 struct Null : public IObject {
+    ObjectType Type() const override;
+    std::string Inspect() const override;
+};
+
+struct ReturnValue : public IObject {
+    std::unique_ptr<IObject> m_value;
+    ReturnValue(std::unique_ptr<IObject> value);
     ObjectType Type() const override;
     std::string Inspect() const override;
 };

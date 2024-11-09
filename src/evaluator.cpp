@@ -46,6 +46,11 @@ std::unique_ptr<Object::IObject> Evaluator::Eval(Ast::INode *node) {
         auto ifStmt = dynamic_cast<Ast::IfExpression *>(node);
         return evalIfExpression(ifStmt);
     }
+    case Ast::Type::RETURN_STATEMENT: {
+        auto returnStmt = dynamic_cast<Ast::ReturnStatement *>(node);
+        auto val = Eval(returnStmt->m_returnValue.get());
+        return std::make_unique<Object::ReturnValue>(std::move(val));
+    }
 
     default:
         return nullptr;
@@ -57,6 +62,10 @@ std::unique_ptr<Object::IObject> Evaluator::evalStatements(
     std::unique_ptr<Object::IObject> result;
     for (auto &statement : stmts) {
         result = Eval(statement.get());
+        if (result->Type() == Object::ObjectType::RETURN_VALUE_OBJ) {
+            return std::move(
+                dynamic_cast<Object::ReturnValue *>(result.get())->m_value);
+        }
     }
     return result;
 }
