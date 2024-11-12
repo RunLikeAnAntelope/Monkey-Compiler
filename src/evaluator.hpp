@@ -10,6 +10,8 @@ class Evaluator {
     std::unique_ptr<Object::IObject> Eval(Ast::INode *node);
 
   private:
+    std::unique_ptr<Object::IObject> evalProgram(Ast::Program *program);
+
     std::unique_ptr<Object::IObject>
     evalStatements(std::vector<std::unique_ptr<Ast::IStatement>> &stmts);
 

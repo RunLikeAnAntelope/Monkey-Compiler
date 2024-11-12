@@ -13,7 +13,7 @@ std::unique_ptr<Object::IObject> Evaluator::Eval(Ast::INode *node) {
 
     switch (node->Type()) {
     case Ast::Type::PROGRAM: {
-        return evalStatements(dynamic_cast<Ast::Program *>(node)->m_statements);
+        return evalProgram(dynamic_cast<Ast::Program *>(node));
     }
     case (Ast::Type::EXPRESSION_STATEMENT): {
         return Eval(
@@ -57,14 +57,26 @@ std::unique_ptr<Object::IObject> Evaluator::Eval(Ast::INode *node) {
     }
 }
 
+std::unique_ptr<Object::IObject> Evaluator::evalProgram(Ast::Program *program) {
+    std::unique_ptr<Object::IObject> result;
+    for (auto &statement : program->m_statements) {
+        result = Eval(statement.get());
+        if (result->Type() == Object::ObjectType::RETURN_VALUE_OBJ) {
+            return std::move(
+                dynamic_cast<Object::ReturnValue *>(result.get())->m_value);
+        }
+    }
+    return result;
+}
+
 std::unique_ptr<Object::IObject> Evaluator::evalStatements(
     std::vector<std::unique_ptr<Ast::IStatement>> &stmts) {
     std::unique_ptr<Object::IObject> result;
     for (auto &statement : stmts) {
         result = Eval(statement.get());
-        if (result->Type() == Object::ObjectType::RETURN_VALUE_OBJ) {
-            return std::move(
-                dynamic_cast<Object::ReturnValue *>(result.get())->m_value);
+        if (result != nullptr &&
+            result->Type() == Object::ObjectType::RETURN_VALUE_OBJ) {
+            return result;
         }
     }
     return result;
