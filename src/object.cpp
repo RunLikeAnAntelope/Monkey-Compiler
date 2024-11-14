@@ -1,4 +1,5 @@
 #include "object.hpp"
+#include <format>
 #include <memory>
 #include <string>
 namespace Object {
@@ -14,6 +15,8 @@ std::string objectTypeToStr(ObjectType type) {
         return "Boolean";
     case Object::ObjectType::RETURN_VALUE_OBJ:
         return "Return";
+    case Object::ObjectType::ERROR_OBJ:
+        return "Error";
     }
 }
 
@@ -36,5 +39,12 @@ ReturnValue::ReturnValue(std::unique_ptr<IObject> value)
     : m_value(std::move(value)) {}
 ObjectType ReturnValue::Type() const { return ObjectType::RETURN_VALUE_OBJ; }
 std::string ReturnValue::Inspect() const { return m_value.get()->Inspect(); }
+
+// Error Object
+Error::Error(std::string message) : m_message(message) {}
+ObjectType Error::Type() const { return ObjectType::ERROR_OBJ; }
+std::string Error::Inspect() const {
+    return std::format("Error: {}", m_message);
+}
 
 } // namespace Object

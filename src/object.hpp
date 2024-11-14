@@ -2,7 +2,13 @@
 #include <memory>
 #include <string>
 namespace Object {
-enum class ObjectType { INTEGER_OBJ, BOOLEAN_OBJ, NULL_OBJ, RETURN_VALUE_OBJ };
+enum class ObjectType {
+    INTEGER_OBJ,
+    BOOLEAN_OBJ,
+    NULL_OBJ,
+    RETURN_VALUE_OBJ,
+    ERROR_OBJ
+};
 std::string objectTypeToStr(ObjectType type);
 struct IObject {
     virtual ObjectType Type() const = 0;
@@ -32,6 +38,13 @@ struct Null : public IObject {
 struct ReturnValue : public IObject {
     std::unique_ptr<IObject> m_value;
     ReturnValue(std::unique_ptr<IObject> value);
+    ObjectType Type() const override;
+    std::string Inspect() const override;
+};
+
+struct Error : public IObject {
+    std::string m_message;
+    Error(std::string message);
     ObjectType Type() const override;
     std::string Inspect() const override;
 };
