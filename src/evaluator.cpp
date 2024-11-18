@@ -33,12 +33,21 @@ std::unique_ptr<Object::IObject> Evaluator::Eval(Ast::INode *node) {
     case Ast::Type::PREFIX_EXPRESSION: {
         auto *prefixExpr = dynamic_cast<Ast::PrefixExpression *>(node);
         auto right = Eval(prefixExpr->m_right.get());
+        if (isError(right.get())) {
+            return right;
+        }
         return evalPrefixExpression(prefixExpr->m_op, std::move(right));
     }
     case Ast::Type::INFIX_EXPRESSION: {
         auto *infixExpr = dynamic_cast<Ast::InfixExpression *>(node);
         auto left = Eval(infixExpr->m_left.get());
+        if (isError(left.get())) {
+            return left;
+        }
         auto right = Eval(infixExpr->m_right.get());
+        if (isError(right.get())) {
+            return right;
+        }
         return evalInfixExpression(infixExpr->m_op, left.get(), right.get());
     }
     case Ast::Type::BLOCK_STATEMENT: {
@@ -52,6 +61,9 @@ std::unique_ptr<Object::IObject> Evaluator::Eval(Ast::INode *node) {
     case Ast::Type::RETURN_STATEMENT: {
         auto *returnStmt = dynamic_cast<Ast::ReturnStatement *>(node);
         auto val = Eval(returnStmt->m_returnValue.get());
+        if (isError(val.get())) {
+            return val;
+        }
         return std::make_unique<Object::ReturnValue>(std::move(val));
     }
 
@@ -81,7 +93,7 @@ std::unique_ptr<Object::IObject> Evaluator::evalStatements(
         result = Eval(statement.get());
         if (result != nullptr &&
             (result->Type() == Object::ObjectType::RETURN_VALUE_OBJ ||
-             result->Type() == Object::ObjectType::RETURN_VALUE_OBJ)) {
+             result->Type() == Object::ObjectType::ERROR_OBJ)) {
             return result;
         }
     }
@@ -229,6 +241,9 @@ bool Evaluator::isTruthy(const Object::IObject *const obj) {
 std::unique_ptr<Object::IObject>
 Evaluator::evalIfExpression(const Ast::IfExpression *const ifExpr) {
     auto condition = Eval(ifExpr->m_condition.get());
+    if (isError(condition.get())) {
+        return condition;
+    }
     if (isTruthy(condition.get())) {
         return Eval(ifExpr->m_consequence.get());
     } else if (ifExpr->m_alternative != nullptr) {
@@ -241,6 +256,13 @@ Evaluator::evalIfExpression(const Ast::IfExpression *const ifExpr) {
 std::unique_ptr<Object::Error>
 Evaluator::newError(const std::string &errorMsg) {
     return std::make_unique<Object::Error>(errorMsg);
+}
+
+bool Evaluator::isError(const Object::IObject *const obj) {
+    if (obj != nullptr) {
+        return obj->Type() == Object::ObjectType::ERROR_OBJ;
+    }
+    return false;
 }
 
 } // namespace Evaluator

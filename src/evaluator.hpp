@@ -45,6 +45,7 @@ class Evaluator {
     evalIfExpression(const Ast::IfExpression *const ifExpr);
 
     static std::unique_ptr<Object::Error> newError(const std::string &errorMsg);
+    static bool isError(const Object::IObject *const obj);
 };
 
 } // namespace Evaluator
