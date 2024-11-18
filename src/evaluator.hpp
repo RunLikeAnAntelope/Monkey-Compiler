@@ -2,6 +2,8 @@
 #include "ast.hpp"
 #include "object.hpp"
 #include <memory>
+#include <string>
+#include <vector>
 
 namespace Evaluator {
 
@@ -15,28 +17,34 @@ class Evaluator {
     std::unique_ptr<Object::IObject>
     evalStatements(std::vector<std::unique_ptr<Ast::IStatement>> &stmts);
 
-    std::unique_ptr<Object::IObject>
-    evalPrefixExpression(std::string op,
+    static std::unique_ptr<Object::IObject>
+    evalPrefixExpression(const std::string &op,
                          std::unique_ptr<Object::IObject> right);
 
-    std::unique_ptr<Object::IObject>
+    static std::unique_ptr<Object::IObject>
     evalBangOperatorExpression(Object::IObject *right);
 
-    std::unique_ptr<Object::IObject>
+    static std::unique_ptr<Object::IObject>
     evalMinusPrefixOperatorExpression(Object::IObject *right);
 
-    std::unique_ptr<Object::IObject> evalInfixExpression(std::string op,
-                                                         Object::IObject *right,
-                                                         Object::IObject *left);
+    static std::unique_ptr<Object::IObject>
+    evalInfixExpression(const std::string &op, Object::IObject *left,
+                        Object::IObject *right);
+
+    static std::unique_ptr<Object::IObject>
+    evalIntegerInfixExpression(const std::string &op, Object::IObject *left,
+                               Object::IObject *right);
+
+    static std::unique_ptr<Object::IObject>
+    evalBooleanInfixExpression(const std::string &op, Object::IObject *left,
+                               Object::IObject *right);
+
+    static bool isTruthy(const Object::IObject *const obj);
 
     std::unique_ptr<Object::IObject>
-    evalIntegerInfixExpression(std::string op, Object::IObject *right,
-                               Object::IObject *left);
+    evalIfExpression(const Ast::IfExpression *const ifExpr);
 
-    bool isTruthy(const Object::IObject *const obj) const;
-
-    std::unique_ptr<Object::IObject>
-    evalIfExpression(const Ast::IfExpression *const ie);
+    static std::unique_ptr<Object::Error> newError(const std::string &errorMsg);
 };
 
 } // namespace Evaluator

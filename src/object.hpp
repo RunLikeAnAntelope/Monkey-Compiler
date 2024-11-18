@@ -1,8 +1,9 @@
 #pragma once
+#include <cstdint>
 #include <memory>
 #include <string>
 namespace Object {
-enum class ObjectType {
+enum class ObjectType : std::uint8_t {
     INTEGER_OBJ,
     BOOLEAN_OBJ,
     NULL_OBJ,
@@ -11,41 +12,41 @@ enum class ObjectType {
 };
 std::string objectTypeToStr(ObjectType type);
 struct IObject {
-    virtual ObjectType Type() const = 0;
-    virtual std::string Inspect() const = 0;
     virtual ~IObject() = default;
+    [[nodiscard]] virtual ObjectType Type() const = 0;
+    [[nodiscard]] virtual std::string Inspect() const = 0;
 };
 
 struct Integer : public IObject {
     long int m_value;
-    Integer(long int value);
-    ObjectType Type() const override;
-    std::string Inspect() const override;
+    explicit Integer(long int value);
+    [[nodiscard]] ObjectType Type() const override;
+    [[nodiscard]] std::string Inspect() const override;
 };
 
 struct Boolean : public IObject {
     bool m_value;
-    Boolean(bool value);
-    ObjectType Type() const override;
-    std::string Inspect() const override;
+    explicit Boolean(bool value);
+    [[nodiscard]] ObjectType Type() const override;
+    [[nodiscard]] std::string Inspect() const override;
 };
 
 struct Null : public IObject {
-    ObjectType Type() const override;
-    std::string Inspect() const override;
+    [[nodiscard]] ObjectType Type() const override;
+    [[nodiscard]] std::string Inspect() const override;
 };
 
 struct ReturnValue : public IObject {
     std::unique_ptr<IObject> m_value;
-    ReturnValue(std::unique_ptr<IObject> value);
-    ObjectType Type() const override;
-    std::string Inspect() const override;
+    explicit ReturnValue(std::unique_ptr<IObject> value);
+    [[nodiscard]] ObjectType Type() const override;
+    [[nodiscard]] std::string Inspect() const override;
 };
 
 struct Error : public IObject {
     std::string m_message;
-    Error(std::string message);
-    ObjectType Type() const override;
-    std::string Inspect() const override;
+    explicit Error(std::string message);
+    [[nodiscard]] ObjectType Type() const override;
+    [[nodiscard]] std::string Inspect() const override;
 };
 } // namespace Object

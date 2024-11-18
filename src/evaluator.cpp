@@ -3,7 +3,10 @@
 #include "object.hpp"
 #include "token.hpp"
 #include <cassert>
+#include <format>
 #include <memory>
+#include <utility>
+#include <vector>
 namespace Evaluator {
 
 std::unique_ptr<Object::IObject> Evaluator::Eval(Ast::INode *node) {
@@ -20,34 +23,34 @@ std::unique_ptr<Object::IObject> Evaluator::Eval(Ast::INode *node) {
             dynamic_cast<Ast::ExpressionStatement *>(node)->m_expression.get());
     }
     case Ast::Type::INTEGER_LITERAL: {
-        auto integer = dynamic_cast<Ast::IntegerLiteral *>(node);
+        auto *integer = dynamic_cast<Ast::IntegerLiteral *>(node);
         return (std::make_unique<Object::Integer>(integer->m_value));
     }
     case Ast::Type::BOOLEAN: {
-        auto boolean = dynamic_cast<Ast::Boolean *>(node);
+        auto *boolean = dynamic_cast<Ast::Boolean *>(node);
         return (std::make_unique<Object::Boolean>(boolean->m_value));
     }
     case Ast::Type::PREFIX_EXPRESSION: {
-        auto prefixExpr = dynamic_cast<Ast::PrefixExpression *>(node);
+        auto *prefixExpr = dynamic_cast<Ast::PrefixExpression *>(node);
         auto right = Eval(prefixExpr->m_right.get());
         return evalPrefixExpression(prefixExpr->m_op, std::move(right));
     }
     case Ast::Type::INFIX_EXPRESSION: {
-        auto infixExpr = dynamic_cast<Ast::InfixExpression *>(node);
+        auto *infixExpr = dynamic_cast<Ast::InfixExpression *>(node);
         auto left = Eval(infixExpr->m_left.get());
         auto right = Eval(infixExpr->m_right.get());
         return evalInfixExpression(infixExpr->m_op, left.get(), right.get());
     }
     case Ast::Type::BLOCK_STATEMENT: {
-        auto blockStmt = dynamic_cast<Ast::BlockStatement *>(node);
+        auto *blockStmt = dynamic_cast<Ast::BlockStatement *>(node);
         return evalStatements(blockStmt->m_statements);
     }
     case Ast::Type::IF_EXPRESSION: {
-        auto ifStmt = dynamic_cast<Ast::IfExpression *>(node);
+        auto *ifStmt = dynamic_cast<Ast::IfExpression *>(node);
         return evalIfExpression(ifStmt);
     }
     case Ast::Type::RETURN_STATEMENT: {
-        auto returnStmt = dynamic_cast<Ast::ReturnStatement *>(node);
+        auto *returnStmt = dynamic_cast<Ast::ReturnStatement *>(node);
         auto val = Eval(returnStmt->m_returnValue.get());
         return std::make_unique<Object::ReturnValue>(std::move(val));
     }
@@ -64,6 +67,8 @@ std::unique_ptr<Object::IObject> Evaluator::evalProgram(Ast::Program *program) {
         if (result->Type() == Object::ObjectType::RETURN_VALUE_OBJ) {
             return std::move(
                 dynamic_cast<Object::ReturnValue *>(result.get())->m_value);
+        } else if (result->Type() == Object::ObjectType::ERROR_OBJ) {
+            return result;
         }
     }
     return result;
@@ -75,7 +80,8 @@ std::unique_ptr<Object::IObject> Evaluator::evalStatements(
     for (auto &statement : stmts) {
         result = Eval(statement.get());
         if (result != nullptr &&
-            result->Type() == Object::ObjectType::RETURN_VALUE_OBJ) {
+            (result->Type() == Object::ObjectType::RETURN_VALUE_OBJ ||
+             result->Type() == Object::ObjectType::RETURN_VALUE_OBJ)) {
             return result;
         }
     }
@@ -83,25 +89,25 @@ std::unique_ptr<Object::IObject> Evaluator::evalStatements(
 }
 
 std::unique_ptr<Object::IObject>
-Evaluator::evalPrefixExpression(std::string op,
+Evaluator::evalPrefixExpression(const std::string &op,
                                 std::unique_ptr<Object::IObject> right) {
     if (op == "!") {
         return evalBangOperatorExpression(right.get());
     } else if (op == "-") {
         return evalMinusPrefixOperatorExpression(right.get());
     } else {
-        return std::make_unique<Object::Null>();
+        return newError(std::format("unknown operator: {}{}", op,
+                                    Object::objectTypeToStr(right->Type())));
     }
 }
 
 std::unique_ptr<Object::IObject>
 Evaluator::evalBangOperatorExpression(Object::IObject *right) {
     if (right->Type() == Object::ObjectType::BOOLEAN_OBJ) {
-        auto boolean = dynamic_cast<Object::Boolean *>(right);
+        auto *boolean = dynamic_cast<Object::Boolean *>(right);
         if (boolean->m_value) {
             return std::make_unique<Object::Boolean>(false);
         } else {
-
             return std::make_unique<Object::Boolean>(true);
         }
     }
@@ -116,25 +122,42 @@ Evaluator::evalBangOperatorExpression(Object::IObject *right) {
 std::unique_ptr<Object::IObject>
 Evaluator::evalMinusPrefixOperatorExpression(Object::IObject *right) {
     if (right->Type() != Object::ObjectType::INTEGER_OBJ) {
-        return std::make_unique<Object::Null>();
+        return newError(std::format("unknown operator: -{}",
+                                    Object::objectTypeToStr(right->Type())));
     }
     auto value = dynamic_cast<Object::Integer *>(right)->m_value;
     return std::make_unique<Object::Integer>(-value);
 }
 
 std::unique_ptr<Object::IObject>
-Evaluator::evalInfixExpression(std::string op, Object::IObject *left,
+Evaluator::evalInfixExpression(const std::string &op, Object::IObject *left,
                                Object::IObject *right) {
+
     if (left->Type() == Object::ObjectType::INTEGER_OBJ &&
         right->Type() == Object::ObjectType::INTEGER_OBJ) {
         return evalIntegerInfixExpression(op, left, right);
     }
 
-    auto leftPtr = dynamic_cast<Object::Boolean *>(left);
-    auto rightPtr = dynamic_cast<Object::Boolean *>(right);
-    if (leftPtr == nullptr || rightPtr == nullptr) {
-        return std::make_unique<Object::Null>();
+    if (left->Type() == Object::ObjectType::BOOLEAN_OBJ &&
+        right->Type() == Object::ObjectType::BOOLEAN_OBJ) {
+        return evalBooleanInfixExpression(op, left, right);
     }
+
+    if (left->Type() != right->Type()) {
+        return newError(std::format("type mismatch: {} {} {}",
+                                    Object::objectTypeToStr(left->Type()), op,
+                                    Object::objectTypeToStr(right->Type())));
+    }
+
+    return newError(std::format("unknown operator: {} {} {}",
+                                Object::objectTypeToStr(left->Type()), op,
+                                Object::objectTypeToStr(right->Type())));
+}
+
+std::unique_ptr<Object::IObject> Evaluator::evalBooleanInfixExpression(
+    const std::string &op, Object::IObject *left, Object::IObject *right) {
+    auto *leftPtr = dynamic_cast<Object::Boolean *>(left);
+    auto *rightPtr = dynamic_cast<Object::Boolean *>(right);
 
     auto leftVal = leftPtr->m_value;
     auto rightVal = rightPtr->m_value;
@@ -145,16 +168,19 @@ Evaluator::evalInfixExpression(std::string op, Object::IObject *left,
         case Token::NOT_EQ:
             return std::make_unique<Object::Boolean>(leftVal != rightVal);
         default:
-            return std::make_unique<Object::Null>();
+            return std::make_unique<Object::Error>(
+                std::format("Unsupported infix operator for booleans. Got {} "
+                            "expected == or !=",
+                            op));
         }
+    } else {
+        return std::make_unique<Object::Error>(
+            std::format("{} is not a valid operator", op));
     }
-
-    return std::make_unique<Object::Null>();
 }
 
-std::unique_ptr<Object::IObject>
-Evaluator::evalIntegerInfixExpression(std::string op, Object::IObject *left,
-                                      Object::IObject *right) {
+std::unique_ptr<Object::IObject> Evaluator::evalIntegerInfixExpression(
+    const std::string &op, Object::IObject *left, Object::IObject *right) {
     auto leftVal = dynamic_cast<Object::Integer *>(left)->m_value;
     auto rightVal = dynamic_cast<Object::Integer *>(right)->m_value;
     auto opIter = Token::tokenMap.find(op);
@@ -178,24 +204,22 @@ Evaluator::evalIntegerInfixExpression(std::string op, Object::IObject *left,
         case Token::NOT_EQ:
             return std::make_unique<Object::Boolean>(leftVal != rightVal);
         default:
-            // left blank on purpose
-            break;
+            return newError(
+                std::format("unknown operator: {} {} {}",
+                            Object::objectTypeToStr(left->Type()), op,
+                            Object::objectTypeToStr(right->Type())));
         }
     }
     return std::make_unique<Object::Null>();
 }
 
-bool Evaluator::isTruthy(const Object::IObject *const obj) const {
+bool Evaluator::isTruthy(const Object::IObject *const obj) {
     switch (obj->Type()) {
     case Object::ObjectType::NULL_OBJ:
         return false;
     case Object::ObjectType::BOOLEAN_OBJ: {
-        auto boolObj = dynamic_cast<const Object::Boolean *>(obj);
-        if (boolObj->m_value) {
-            return true;
-        } else {
-            return false;
-        }
+        const auto *boolObj = dynamic_cast<const Object::Boolean *>(obj);
+        return boolObj->m_value;
     }
     default:
         return true;
@@ -203,15 +227,20 @@ bool Evaluator::isTruthy(const Object::IObject *const obj) const {
 }
 
 std::unique_ptr<Object::IObject>
-Evaluator::evalIfExpression(const Ast::IfExpression *const ie) {
-    auto condition = Eval(ie->m_condition.get());
+Evaluator::evalIfExpression(const Ast::IfExpression *const ifExpr) {
+    auto condition = Eval(ifExpr->m_condition.get());
     if (isTruthy(condition.get())) {
-        return Eval(ie->m_consequence.get());
-    } else if (ie->m_alternative != nullptr) {
-        return Eval(ie->m_alternative.get());
+        return Eval(ifExpr->m_consequence.get());
+    } else if (ifExpr->m_alternative != nullptr) {
+        return Eval(ifExpr->m_alternative.get());
     } else {
         return std::make_unique<Object::Null>();
     }
+}
+
+std::unique_ptr<Object::Error>
+Evaluator::newError(const std::string &errorMsg) {
+    return std::make_unique<Object::Error>(errorMsg);
 }
 
 } // namespace Evaluator

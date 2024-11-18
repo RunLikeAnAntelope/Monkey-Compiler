@@ -174,3 +174,56 @@ TEST(Evaluator, TestReturnStatements) {
         testIntegerObject(evaluated.get(), tst.expected);
     }
 }
+
+TEST(Evaluator, ErrorHandling) {
+    struct test {
+        const std::string input;
+        const std::string expectedMessage;
+    };
+
+    std::vector<test> tests = {
+        {
+            "5 + true;",
+            "type mismatch: INTEGER + BOOLEAN",
+        },
+        {
+            "5 + true; 5;",
+            "type mismatch: INTEGER + BOOLEAN",
+        },
+        {
+            "-true",
+            "unknown operator: -BOOLEAN",
+        },
+        {
+            "true + false;",
+            "Unsupported infix operator for booleans. Got + expected == or !=",
+        },
+        {
+            "5; true - false; 5",
+            "Unsupported infix operator for booleans. Got - expected == or !=",
+        },
+        {
+            "if (10 > 1) { true + false; }",
+            "Unsupported infix operator for booleans. Got + expected == or !=",
+        },
+        {"if (10 > 1){"
+         "  if (10 > 1) {"
+         "    return true + false;"
+         "  }"
+         "  return 1;"
+         "}",
+         "Unsupported infix operator for booleans. Got + expected == or !="},
+    };
+    for (auto tst : tests) {
+        auto evaluated = testEval(tst.input);
+        ASSERT_NE(evaluated, nullptr);
+
+        ASSERT_EQ(evaluated->Type(), Object::ObjectType::ERROR_OBJ)
+            << std::format("no error object returned, got {}",
+                           Object::objectTypeToStr(evaluated->Type()));
+        auto errorObj = dynamic_cast<Object::Error *>(evaluated.get());
+        ASSERT_EQ(errorObj->m_message, tst.expectedMessage)
+            << std::format("wrong error message. expected = {}, got = {}",
+                           tst.expectedMessage, errorObj->m_message);
+    }
+}

@@ -8,15 +8,15 @@ namespace Object {
 std::string objectTypeToStr(ObjectType type) {
     switch (type) {
     case ObjectType::INTEGER_OBJ:
-        return "Integer";
+        return "INTEGER";
     case Object::ObjectType::BOOLEAN_OBJ:
-        return "Boolean";
+        return "BOOLEAN";
     case Object::ObjectType::NULL_OBJ:
-        return "Boolean";
+        return "NULL";
     case Object::ObjectType::RETURN_VALUE_OBJ:
-        return "Return";
+        return "RETURN";
     case Object::ObjectType::ERROR_OBJ:
-        return "Error";
+        return "ERROR";
     }
 }
 
@@ -38,10 +38,10 @@ std::string Null::Inspect() const { return "null"; }
 ReturnValue::ReturnValue(std::unique_ptr<IObject> value)
     : m_value(std::move(value)) {}
 ObjectType ReturnValue::Type() const { return ObjectType::RETURN_VALUE_OBJ; }
-std::string ReturnValue::Inspect() const { return m_value.get()->Inspect(); }
+std::string ReturnValue::Inspect() const { return m_value->Inspect(); }
 
 // Error Object
-Error::Error(std::string message) : m_message(message) {}
+Error::Error(std::string message) : m_message(std::move(message)) {}
 ObjectType Error::Type() const { return ObjectType::ERROR_OBJ; }
 std::string Error::Inspect() const {
     return std::format("Error: {}", m_message);

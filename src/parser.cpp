@@ -166,9 +166,9 @@ Parser::parseInfixExpression(std::unique_ptr<Ast::IExpression> left) {
 }
 
 std::unique_ptr<Ast::IExpression> Parser::parseBoolean() {
-    auto b = std::make_unique<Ast::Boolean>(m_curToken);
-    b->m_value = m_curToken.Type == Token::FALSE ? false : true;
-    return b;
+    auto boolean = std::make_unique<Ast::Boolean>(m_curToken);
+    boolean->m_value = m_curToken.Type != Token::FALSE;
+    return boolean;
 }
 
 std::unique_ptr<Ast::IExpression> Parser::parseGroupedExpression() {
@@ -349,11 +349,11 @@ void Parser::noPrefixParseFnError(Token::TokenType t) {
 }
 
 void Parser::malformedFunctionParameterListError() {
-    m_errors.push_back("Malformed Function Parameter List Error.");
+    m_errors.emplace_back("Malformed Function Parameter List Error.");
 }
 
 void Parser::malformedFunctionCallArgumentsListError() {
-    m_errors.push_back("Malformed Function Parameter List Error.");
+    m_errors.emplace_back("Malformed Function Parameter List Error.");
 }
 
 } // namespace Parser
