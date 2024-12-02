@@ -4,6 +4,7 @@
 #include "token.hpp"
 #include <cassert>
 #include <format>
+#include <iostream>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -12,17 +13,17 @@ namespace Evaluator {
 // Environment stuff
 Environment::EnvObj Environment::Get(std::string name) {
     if (this->m_environment.contains(name)) {
-        return {this->m_environment[name].get(), true};
+        return {this->m_environment[name], true};
     } else {
         return {nullptr, false};
     }
 }
-void Environment::Set(std::string name, std::unique_ptr<Object::IObject> obj) {
-    this->m_environment[name] = std::move(obj);
+void Environment::Set(std::string name, std::shared_ptr<Object::IObject> obj) {
+    this->m_environment[name] = obj;
 }
 
 // Environment stuff
-std::unique_ptr<Object::IObject> Evaluator::Eval(Ast::INode *node) {
+std::shared_ptr<Object::IObject> Evaluator::Eval(Ast::INode *node) {
     if (node == nullptr) {
         return nullptr;
     }
@@ -37,11 +38,11 @@ std::unique_ptr<Object::IObject> Evaluator::Eval(Ast::INode *node) {
     }
     case Ast::Type::INTEGER_LITERAL: {
         auto *integer = dynamic_cast<Ast::IntegerLiteral *>(node);
-        return (std::make_unique<Object::Integer>(integer->m_value));
+        return (std::make_shared<Object::Integer>(integer->m_value));
     }
     case Ast::Type::BOOLEAN: {
         auto *boolean = dynamic_cast<Ast::Boolean *>(node);
-        return (std::make_unique<Object::Boolean>(boolean->m_value));
+        return (std::make_shared<Object::Boolean>(boolean->m_value));
     }
     case Ast::Type::PREFIX_EXPRESSION: {
         auto *prefixExpr = dynamic_cast<Ast::PrefixExpression *>(node);
@@ -77,7 +78,7 @@ std::unique_ptr<Object::IObject> Evaluator::Eval(Ast::INode *node) {
         if (isError(val.get())) {
             return val;
         }
-        return std::make_unique<Object::ReturnValue>(std::move(val));
+        return std::make_shared<Object::ReturnValue>(val);
     }
     case Ast::Type::LET_STATEMENT: {
         auto *letStmt = dynamic_cast<Ast::LetStatement *>(node);
@@ -85,30 +86,30 @@ std::unique_ptr<Object::IObject> Evaluator::Eval(Ast::INode *node) {
         if (isError(val.get())) {
             return val;
         }
-        env.Set(letStmt->m_name->m_value, std::move(val));
+        env.Set(letStmt->m_name->m_value, val);
     }
-        // case Ast::Type::IDENTIFIER: {
-        //     auto *ident = dynamic_cast<Ast::Identifier *>(node);
-        //     auto lookup = env.Get(ident->m_value);
-        //     if (!lookup.ok) {
-        //         return newError(
-        //             std::format("identifier not found: {}", ident->m_value));
-        //     }
-        //     return evalIdentifier(lookup.obj);
-        // }
+    case Ast::Type::IDENTIFIER: {
+        auto *ident = dynamic_cast<Ast::Identifier *>(node);
+        std::cout << std::format("{}", ident->m_value);
+        auto lookup = env.Get(ident->m_value);
+        if (!lookup.ok) {
+            return newError(
+                std::format("identifier not found: {}", ident->m_value));
+        }
+        return lookup.obj;
+    }
 
     default:
         return nullptr;
     }
 }
 
-std::unique_ptr<Object::IObject> Evaluator::evalProgram(Ast::Program *program) {
-    std::unique_ptr<Object::IObject> result;
+std::shared_ptr<Object::IObject> Evaluator::evalProgram(Ast::Program *program) {
+    std::shared_ptr<Object::IObject> result;
     for (auto &statement : program->m_statements) {
         result = Eval(statement.get());
         if (result->Type() == Object::ObjectType::RETURN_VALUE_OBJ) {
-            return std::move(
-                dynamic_cast<Object::ReturnValue *>(result.get())->m_value);
+            return dynamic_cast<Object::ReturnValue *>(result.get())->m_value;
         } else if (result->Type() == Object::ObjectType::ERROR_OBJ) {
             return result;
         }
@@ -116,9 +117,9 @@ std::unique_ptr<Object::IObject> Evaluator::evalProgram(Ast::Program *program) {
     return result;
 }
 
-std::unique_ptr<Object::IObject> Evaluator::evalStatements(
+std::shared_ptr<Object::IObject> Evaluator::evalStatements(
     std::vector<std::unique_ptr<Ast::IStatement>> &stmts) {
-    std::unique_ptr<Object::IObject> result;
+    std::shared_ptr<Object::IObject> result;
     for (auto &statement : stmts) {
         result = Eval(statement.get());
         if (result != nullptr &&
@@ -130,9 +131,9 @@ std::unique_ptr<Object::IObject> Evaluator::evalStatements(
     return result;
 }
 
-std::unique_ptr<Object::IObject>
+std::shared_ptr<Object::IObject>
 Evaluator::evalPrefixExpression(const std::string &op,
-                                std::unique_ptr<Object::IObject> right) {
+                                std::shared_ptr<Object::IObject> right) {
     if (op == "!") {
         return evalBangOperatorExpression(right.get());
     } else if (op == "-") {
@@ -143,35 +144,35 @@ Evaluator::evalPrefixExpression(const std::string &op,
     }
 }
 
-std::unique_ptr<Object::IObject>
+std::shared_ptr<Object::IObject>
 Evaluator::evalBangOperatorExpression(Object::IObject *right) {
     if (right->Type() == Object::ObjectType::BOOLEAN_OBJ) {
         auto *boolean = dynamic_cast<Object::Boolean *>(right);
         if (boolean->m_value) {
-            return std::make_unique<Object::Boolean>(false);
+            return std::make_shared<Object::Boolean>(false);
         } else {
-            return std::make_unique<Object::Boolean>(true);
+            return std::make_shared<Object::Boolean>(true);
         }
     }
 
     if (right->Type() == Object::ObjectType::NULL_OBJ) {
-        return std::make_unique<Object::Boolean>(true);
+        return std::make_shared<Object::Boolean>(true);
     }
 
-    return std::make_unique<Object::Boolean>(false);
+    return std::make_shared<Object::Boolean>(false);
 }
 
-std::unique_ptr<Object::IObject>
+std::shared_ptr<Object::IObject>
 Evaluator::evalMinusPrefixOperatorExpression(Object::IObject *right) {
     if (right->Type() != Object::ObjectType::INTEGER_OBJ) {
         return newError(std::format("unknown operator: -{}",
                                     Object::objectTypeToStr(right->Type())));
     }
     auto value = dynamic_cast<Object::Integer *>(right)->m_value;
-    return std::make_unique<Object::Integer>(-value);
+    return std::make_shared<Object::Integer>(-value);
 }
 
-std::unique_ptr<Object::IObject>
+std::shared_ptr<Object::IObject>
 Evaluator::evalInfixExpression(const std::string &op, Object::IObject *left,
                                Object::IObject *right) {
 
@@ -196,7 +197,7 @@ Evaluator::evalInfixExpression(const std::string &op, Object::IObject *left,
                                 Object::objectTypeToStr(right->Type())));
 }
 
-std::unique_ptr<Object::IObject> Evaluator::evalBooleanInfixExpression(
+std::shared_ptr<Object::IObject> Evaluator::evalBooleanInfixExpression(
     const std::string &op, Object::IObject *left, Object::IObject *right) {
     auto *leftPtr = dynamic_cast<Object::Boolean *>(left);
     auto *rightPtr = dynamic_cast<Object::Boolean *>(right);
@@ -206,22 +207,22 @@ std::unique_ptr<Object::IObject> Evaluator::evalBooleanInfixExpression(
     if (Token::tokenMap.find(op) != Token::tokenMap.end()) {
         switch (Token::tokenMap.at(op)) {
         case Token::EQ:
-            return std::make_unique<Object::Boolean>(leftVal == rightVal);
+            return std::make_shared<Object::Boolean>(leftVal == rightVal);
         case Token::NOT_EQ:
-            return std::make_unique<Object::Boolean>(leftVal != rightVal);
+            return std::make_shared<Object::Boolean>(leftVal != rightVal);
         default:
-            return std::make_unique<Object::Error>(
+            return std::make_shared<Object::Error>(
                 std::format("Unsupported infix operator for booleans. Got {} "
                             "expected == or !=",
                             op));
         }
     } else {
-        return std::make_unique<Object::Error>(
+        return std::make_shared<Object::Error>(
             std::format("{} is not a valid operator", op));
     }
 }
 
-std::unique_ptr<Object::IObject> Evaluator::evalIntegerInfixExpression(
+std::shared_ptr<Object::IObject> Evaluator::evalIntegerInfixExpression(
     const std::string &op, Object::IObject *left, Object::IObject *right) {
     auto leftVal = dynamic_cast<Object::Integer *>(left)->m_value;
     auto rightVal = dynamic_cast<Object::Integer *>(right)->m_value;
@@ -230,21 +231,21 @@ std::unique_ptr<Object::IObject> Evaluator::evalIntegerInfixExpression(
     if (opIter != Token::tokenMap.end()) {
         switch (opIter->second) {
         case Token::PLUS:
-            return std::make_unique<Object::Integer>(leftVal + rightVal);
+            return std::make_shared<Object::Integer>(leftVal + rightVal);
         case Token::MINUS:
-            return std::make_unique<Object::Integer>(leftVal - rightVal);
+            return std::make_shared<Object::Integer>(leftVal - rightVal);
         case Token::ASTERISK:
-            return std::make_unique<Object::Integer>(leftVal * rightVal);
+            return std::make_shared<Object::Integer>(leftVal * rightVal);
         case Token::SLASH:
-            return std::make_unique<Object::Integer>(leftVal / rightVal);
+            return std::make_shared<Object::Integer>(leftVal / rightVal);
         case Token::LT:
-            return std::make_unique<Object::Boolean>(leftVal < rightVal);
+            return std::make_shared<Object::Boolean>(leftVal < rightVal);
         case Token::GT:
-            return std::make_unique<Object::Boolean>(leftVal > rightVal);
+            return std::make_shared<Object::Boolean>(leftVal > rightVal);
         case Token::EQ:
-            return std::make_unique<Object::Boolean>(leftVal == rightVal);
+            return std::make_shared<Object::Boolean>(leftVal == rightVal);
         case Token::NOT_EQ:
-            return std::make_unique<Object::Boolean>(leftVal != rightVal);
+            return std::make_shared<Object::Boolean>(leftVal != rightVal);
         default:
             return newError(
                 std::format("unknown operator: {} {} {}",
@@ -252,7 +253,7 @@ std::unique_ptr<Object::IObject> Evaluator::evalIntegerInfixExpression(
                             Object::objectTypeToStr(right->Type())));
         }
     }
-    return std::make_unique<Object::Null>();
+    return std::make_shared<Object::Null>();
 }
 
 bool Evaluator::isTruthy(const Object::IObject *const obj) {
@@ -268,7 +269,7 @@ bool Evaluator::isTruthy(const Object::IObject *const obj) {
     }
 }
 
-std::unique_ptr<Object::IObject>
+std::shared_ptr<Object::IObject>
 Evaluator::evalIfExpression(const Ast::IfExpression *const ifExpr) {
     auto condition = Eval(ifExpr->m_condition.get());
     if (isError(condition.get())) {
@@ -279,13 +280,13 @@ Evaluator::evalIfExpression(const Ast::IfExpression *const ifExpr) {
     } else if (ifExpr->m_alternative != nullptr) {
         return Eval(ifExpr->m_alternative.get());
     } else {
-        return std::make_unique<Object::Null>();
+        return std::make_shared<Object::Null>();
     }
 }
 
-std::unique_ptr<Object::Error>
+std::shared_ptr<Object::Error>
 Evaluator::newError(const std::string &errorMsg) {
-    return std::make_unique<Object::Error>(errorMsg);
+    return std::make_shared<Object::Error>(errorMsg);
 }
 
 bool Evaluator::isError(const Object::IObject *const obj) {

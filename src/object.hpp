@@ -37,8 +37,8 @@ struct Null : public IObject {
 };
 
 struct ReturnValue : public IObject {
-    std::unique_ptr<IObject> m_value;
-    explicit ReturnValue(std::unique_ptr<IObject> value);
+    std::shared_ptr<IObject> m_value;
+    explicit ReturnValue(std::shared_ptr<IObject> value);
     [[nodiscard]] ObjectType Type() const override;
     [[nodiscard]] std::string Inspect() const override;
 };

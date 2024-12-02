@@ -35,7 +35,7 @@ ObjectType Null::Type() const { return ObjectType::NULL_OBJ; }
 std::string Null::Inspect() const { return "null"; }
 
 // Return Object
-ReturnValue::ReturnValue(std::unique_ptr<IObject> value)
+ReturnValue::ReturnValue(std::shared_ptr<IObject> value)
     : m_value(std::move(value)) {}
 ObjectType ReturnValue::Type() const { return ObjectType::RETURN_VALUE_OBJ; }
 std::string ReturnValue::Inspect() const { return m_value->Inspect(); }
