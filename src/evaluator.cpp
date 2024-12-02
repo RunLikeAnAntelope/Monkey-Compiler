@@ -9,7 +9,14 @@
 #include <utility>
 #include <vector>
 namespace Evaluator {
+std::shared_ptr<Object::Boolean> FALSE =
+    std::make_unique<Object::Boolean>(false);
+std::shared_ptr<Object::Boolean> TRUE = std::make_shared<Object::Boolean>(true);
+std::shared_ptr<Object::Null> NULL_O = std::make_shared<Object::Null>();
 
+std::shared_ptr<Object::Boolean> nativeBoolToBoolObject(bool boolean) {
+    return boolean ? TRUE : FALSE;
+}
 // Environment stuff
 Environment::EnvObj Environment::Get(std::string name) {
     if (this->m_environment.contains(name)) {
@@ -42,7 +49,7 @@ std::shared_ptr<Object::IObject> Evaluator::Eval(Ast::INode *node) {
     }
     case Ast::Type::BOOLEAN: {
         auto *boolean = dynamic_cast<Ast::Boolean *>(node);
-        return (std::make_shared<Object::Boolean>(boolean->m_value));
+        return nativeBoolToBoolObject(boolean->m_value);
     }
     case Ast::Type::PREFIX_EXPRESSION: {
         auto *prefixExpr = dynamic_cast<Ast::PrefixExpression *>(node);
@@ -152,17 +159,17 @@ Evaluator::evalBangOperatorExpression(Object::IObject *right) {
     if (right->Type() == Object::ObjectType::BOOLEAN_OBJ) {
         auto *boolean = dynamic_cast<Object::Boolean *>(right);
         if (boolean->m_value) {
-            return std::make_shared<Object::Boolean>(false);
+            return FALSE;
         } else {
-            return std::make_shared<Object::Boolean>(true);
+            return TRUE;
         }
     }
 
     if (right->Type() == Object::ObjectType::NULL_OBJ) {
-        return std::make_shared<Object::Boolean>(true);
+        return NULL_O;
     }
 
-    return std::make_shared<Object::Boolean>(false);
+    return FALSE;
 }
 
 std::shared_ptr<Object::IObject>
@@ -210,9 +217,9 @@ std::shared_ptr<Object::IObject> Evaluator::evalBooleanInfixExpression(
     if (Token::tokenMap.find(op) != Token::tokenMap.end()) {
         switch (Token::tokenMap.at(op)) {
         case Token::EQ:
-            return std::make_shared<Object::Boolean>(leftVal == rightVal);
+            return nativeBoolToBoolObject(leftVal == rightVal);
         case Token::NOT_EQ:
-            return std::make_shared<Object::Boolean>(leftVal != rightVal);
+            return nativeBoolToBoolObject(leftVal != rightVal);
         default:
             return std::make_shared<Object::Error>(
                 std::format("Unsupported infix operator for booleans. Got {} "
@@ -242,13 +249,13 @@ std::shared_ptr<Object::IObject> Evaluator::evalIntegerInfixExpression(
         case Token::SLASH:
             return std::make_shared<Object::Integer>(leftVal / rightVal);
         case Token::LT:
-            return std::make_shared<Object::Boolean>(leftVal < rightVal);
+            return nativeBoolToBoolObject(leftVal < rightVal);
         case Token::GT:
-            return std::make_shared<Object::Boolean>(leftVal > rightVal);
+            return nativeBoolToBoolObject(leftVal > rightVal);
         case Token::EQ:
-            return std::make_shared<Object::Boolean>(leftVal == rightVal);
+            return nativeBoolToBoolObject(leftVal == rightVal);
         case Token::NOT_EQ:
-            return std::make_shared<Object::Boolean>(leftVal != rightVal);
+            return nativeBoolToBoolObject(leftVal != rightVal);
         default:
             return newError(
                 std::format("unknown operator: {} {} {}",
@@ -256,7 +263,7 @@ std::shared_ptr<Object::IObject> Evaluator::evalIntegerInfixExpression(
                             Object::objectTypeToStr(right->Type())));
         }
     }
-    return std::make_shared<Object::Null>();
+    return NULL_O;
 }
 
 bool Evaluator::isTruthy(const Object::IObject *const obj) {
@@ -283,7 +290,7 @@ Evaluator::evalIfExpression(const Ast::IfExpression *const ifExpr) {
     } else if (ifExpr->m_alternative != nullptr) {
         return Eval(ifExpr->m_alternative.get());
     } else {
-        return std::make_shared<Object::Null>();
+        return NULL_O;
     }
 }
 

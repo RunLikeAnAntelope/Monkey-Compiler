@@ -25,7 +25,7 @@ class Evaluator {
     std::shared_ptr<Object::IObject> evalProgram(Ast::Program *program);
 
   private:
-    // variables
+    // Environment
     Environment env;
 
     // methods
