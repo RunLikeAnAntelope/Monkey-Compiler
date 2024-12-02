@@ -87,10 +87,10 @@ std::shared_ptr<Object::IObject> Evaluator::Eval(Ast::INode *node) {
             return val;
         }
         env.Set(letStmt->m_name->m_value, val);
+        return nullptr;
     }
     case Ast::Type::IDENTIFIER: {
         auto *ident = dynamic_cast<Ast::Identifier *>(node);
-        std::cout << std::format("{}", ident->m_value);
         auto lookup = env.Get(ident->m_value);
         if (!lookup.ok) {
             return newError(
@@ -108,10 +108,13 @@ std::shared_ptr<Object::IObject> Evaluator::evalProgram(Ast::Program *program) {
     std::shared_ptr<Object::IObject> result;
     for (auto &statement : program->m_statements) {
         result = Eval(statement.get());
-        if (result->Type() == Object::ObjectType::RETURN_VALUE_OBJ) {
-            return dynamic_cast<Object::ReturnValue *>(result.get())->m_value;
-        } else if (result->Type() == Object::ObjectType::ERROR_OBJ) {
-            return result;
+        if (result) {
+            if (result->Type() == Object::ObjectType::RETURN_VALUE_OBJ) {
+                return dynamic_cast<Object::ReturnValue *>(result.get())
+                    ->m_value;
+            } else if (result->Type() == Object::ObjectType::ERROR_OBJ) {
+                return result;
+            }
         }
     }
     return result;
