@@ -9,6 +9,7 @@ namespace Repl {
 void Start() {
 
     std::string scanned;
+    Evaluator::Evaluator evaluator;
     while (true) {
         std::cout << PROMPT;
         std::getline(std::cin, scanned);
@@ -20,7 +21,6 @@ void Start() {
             printParserErrors(p.Errors());
             continue;
         }
-        Evaluator::Evaluator evaluator;
         auto evaluated = evaluator.Eval(&program);
         if (evaluated != nullptr && evaluated.get() != nullptr) {
             std::cout << evaluated.get()->Inspect() << std::endl;
