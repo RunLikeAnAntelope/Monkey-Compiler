@@ -9,6 +9,19 @@
 #include <vector>
 namespace Evaluator {
 
+// Environment stuff
+Environment::EnvObj Environment::Get(std::string name) {
+    if (this->m_environment.contains(name)) {
+        return {this->m_environment[name].get(), true};
+    } else {
+        return {nullptr, false};
+    }
+}
+void Environment::Set(std::string name, std::unique_ptr<Object::IObject> obj) {
+    this->m_environment[name] = std::move(obj);
+}
+
+// Environment stuff
 std::unique_ptr<Object::IObject> Evaluator::Eval(Ast::INode *node) {
     if (node == nullptr) {
         return nullptr;
@@ -66,6 +79,23 @@ std::unique_ptr<Object::IObject> Evaluator::Eval(Ast::INode *node) {
         }
         return std::make_unique<Object::ReturnValue>(std::move(val));
     }
+    case Ast::Type::LET_STATEMENT: {
+        auto *letStmt = dynamic_cast<Ast::LetStatement *>(node);
+        auto val = Eval(letStmt->m_expression.get());
+        if (isError(val.get())) {
+            return val;
+        }
+        env.Set(letStmt->m_name->m_value, std::move(val));
+    }
+        // case Ast::Type::IDENTIFIER: {
+        //     auto *ident = dynamic_cast<Ast::Identifier *>(node);
+        //     auto lookup = env.Get(ident->m_value);
+        //     if (!lookup.ok) {
+        //         return newError(
+        //             std::format("identifier not found: {}", ident->m_value));
+        //     }
+        //     return evalIdentifier(lookup.obj);
+        // }
 
     default:
         return nullptr;

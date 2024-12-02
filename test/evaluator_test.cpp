@@ -206,13 +206,19 @@ TEST(Evaluator, ErrorHandling) {
             "if (10 > 1) { true + false; }",
             "Unsupported infix operator for booleans. Got + expected == or !=",
         },
-        {"if (10 > 1){"
-         "  if (10 > 1) {"
-         "    return true + false;"
-         "  }"
-         "  return 1;"
-         "}",
-         "Unsupported infix operator for booleans. Got + expected == or !="},
+        {
+            "if (10 > 1){"
+            "  if (10 > 1) {"
+            "    return true + false;"
+            "  }"
+            "  return 1;"
+            "}",
+            "Unsupported infix operator for booleans. Got + expected == or !=",
+        },
+        {
+            "foobar",
+            "identifier not found: foobar",
+        },
     };
     for (auto tst : tests) {
         auto evaluated = testEval(tst.input);
@@ -225,5 +231,23 @@ TEST(Evaluator, ErrorHandling) {
         ASSERT_EQ(errorObj->m_message, tst.expectedMessage)
             << std::format("wrong error message. expected = {}, got = {}",
                            tst.expectedMessage, errorObj->m_message);
+    }
+}
+
+TEST(Evaluator, LetStatements) {
+    struct test {
+        std::string input;
+        const long int expected;
+    };
+
+    std::vector<test> tests = {
+        {"let a = 5; a;", 5},
+        {"let a = 5 * 5; a;", 25},
+        {"let a = 5; let b = a; b;", 5},
+        {"let a = 5; let b = a; let c = a + b + 5; c;", 15},
+    };
+
+    for (auto tst : tests) {
+        testIntegerObject(testEval(tst.input).get(), tst.expected);
     }
 }
