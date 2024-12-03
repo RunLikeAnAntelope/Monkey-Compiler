@@ -5,9 +5,9 @@ namespace Helpers {
 // Take a vector of strings and return a single string with the strings
 // delimited by the given string
 std::string combineVecStrWithDelim(std::vector<std::string> vecStr,
-                                   std::string delimiter) {
+                                   const std::string &delimiter) {
     auto delimit_fold = [delimiter](std::string accumulator,
-                                    std::string addition) {
+                                    const std::string &addition) {
         return std::move(accumulator) + delimiter + addition;
     };
 

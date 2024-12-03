@@ -46,41 +46,41 @@ struct StringTok {
     TokenType Type;
 };
 
-const std::vector<StringTok> strToTok = {{"ILLEGAL", ILLEGAL},
-                                         {"EOF", EOF_},
+const std::vector<StringTok> strToTok = {{.Str = "ILLEGAL", .Type = ILLEGAL},
+                                         {.Str = "EOF", .Type = EOF_},
 
                                          // identifiers + literals
-                                         {"IDENT", IDENT},
-                                         {"INT", INT},
+                                         {.Str = "IDENT", .Type = IDENT},
+                                         {.Str = "INT", .Type = INT},
 
                                          // Operators
-                                         {"=", ASSIGN},
-                                         {"+", PLUS},
-                                         {"-", MINUS},
-                                         {"!", BANG},
-                                         {"*", ASTERISK},
-                                         {"/", SLASH},
-                                         {"<", LT},
-                                         {">", GT},
-                                         {"==", EQ},
-                                         {"!=", NOT_EQ},
+                                         {.Str = "=", .Type = ASSIGN},
+                                         {.Str = "+", .Type = PLUS},
+                                         {.Str = "-", .Type = MINUS},
+                                         {.Str = "!", .Type = BANG},
+                                         {.Str = "*", .Type = ASTERISK},
+                                         {.Str = "/", .Type = SLASH},
+                                         {.Str = "<", .Type = LT},
+                                         {.Str = ">", .Type = GT},
+                                         {.Str = "==", .Type = EQ},
+                                         {.Str = "!=", .Type = NOT_EQ},
 
                                          // delimiters
-                                         {",", COMMA},
-                                         {";", SEMICOLON},
-                                         {"(", LPAREN},
-                                         {")", RPAREN},
-                                         {"{", LBRACE},
-                                         {"}", RBRACE},
+                                         {.Str = ",", .Type = COMMA},
+                                         {.Str = ";", .Type = SEMICOLON},
+                                         {.Str = "(", .Type = LPAREN},
+                                         {.Str = ")", .Type = RPAREN},
+                                         {.Str = "{", .Type = LBRACE},
+                                         {.Str = "}", .Type = RBRACE},
 
                                          // Keywords
-                                         {"FUNCTION", FUNCTION},
-                                         {"LET", LET},
-                                         {"TRUE", TRUE},
-                                         {"FALSE", FALSE},
-                                         {"IF", IF},
-                                         {"ELSE", ELSE},
-                                         {"RETURN", RETURN}
+                                         {.Str = "FUNCTION", .Type = FUNCTION},
+                                         {.Str = "LET", .Type = LET},
+                                         {.Str = "TRUE", .Type = TRUE},
+                                         {.Str = "FALSE", .Type = FALSE},
+                                         {.Str = "IF", .Type = IF},
+                                         {.Str = "ELSE", .Type = ELSE},
+                                         {.Str = "RETURN", .Type = RETURN}
 
 };
 
@@ -168,6 +168,6 @@ const std::unordered_map<std::string, TokenType> keywords = {
     {"fn", FUNCTION}, {"let", LET},   {"true", TRUE},    {"false", FALSE},
     {"if", IF},       {"else", ELSE}, {"return", RETURN}};
 
-TokenType LookupIdent(std::string ident);
+TokenType LookupIdent(const std::string &ident);
 
 } // namespace Token

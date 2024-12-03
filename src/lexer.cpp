@@ -2,12 +2,11 @@
 #include "token.hpp"
 #include <cctype>
 #include <string>
+#include <utility>
 
 namespace Lexer {
 
-Lexer::Lexer(std::string input) : m_input(input) { readChar(); }
-
-Lexer::~Lexer() {}
+Lexer::Lexer(std::string input) : m_input(std::move(input)) { readChar(); }
 
 Token::Token Lexer::NextToken() {
     Token::Token tok{};

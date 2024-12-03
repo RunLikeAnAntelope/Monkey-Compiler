@@ -11,7 +11,7 @@
 #include <variant>
 using Common::variant;
 
-std::shared_ptr<Object::IObject> testEval(const std::string input) {
+static std::shared_ptr<Object::IObject> testEval(const std::string &input) {
     Lexer::Lexer l(input);
     Parser::Parser p(l);
     Ast::Program program = p.ParseProgram();
@@ -19,7 +19,8 @@ std::shared_ptr<Object::IObject> testEval(const std::string input) {
     return evaluator.Eval(&program);
 }
 
-void testIntegerObject(Object::IObject *object, const long int expected) {
+static void testIntegerObject(Object::IObject *object,
+                              const long int expected) {
     auto intObj = dynamic_cast<Object::Integer *>(object);
     ASSERT_NE(intObj, nullptr)
         << std::format("object is not an Integer, got a {}",
@@ -29,7 +30,7 @@ void testIntegerObject(Object::IObject *object, const long int expected) {
                        intObj->m_value, expected);
 }
 
-void testBooleanObject(Object::IObject *object, const bool expected) {
+static void testBooleanObject(Object::IObject *object, const bool expected) {
     auto boolObj = dynamic_cast<Object::Boolean *>(object);
     ASSERT_NE(boolObj, nullptr)
         << std::format("object is not a Boolean, got a {}",
@@ -39,7 +40,7 @@ void testBooleanObject(Object::IObject *object, const bool expected) {
                        boolObj->m_value, expected);
 }
 
-void testNullObject(Object::IObject *object) {
+static void testNullObject(Object::IObject *object) {
     ASSERT_TRUE(object->Type() == Object::ObjectType::NULL_OBJ) << std::format(
         "object is not NULL, got {}", Object::objectTypeToStr(object->Type()));
 }
@@ -51,24 +52,24 @@ TEST(Evaluator, EvalIntegerExpression) {
     };
 
     std::vector<test> tests = {
-        {"5", 5},
-        {"10", 10},
-        {"-5", -5},
-        {"-10", -10},
-        {"5 + 5 + 5 + 5 - 10", 10},
-        {"2 * 2 * 2 * 2 * 2", 32},
-        {"-50 + 100 + -50", 0},
-        {"5 * 2 + 10", 20},
-        {"5 + 2 * 10", 25},
-        {"20 + 2 * -10", 0},
-        {"50 / 2 * 2 + 10", 60},
-        {"2 * (5 + 10)", 30},
-        {"3 * 3 * 3 + 10", 37},
-        {"3 * (3 * 3) + 10", 37},
-        {"(5 + 10 * 2 + 15 / 3) * 2 + -10", 50},
+        {.input = "5", .expected = 5},
+        {.input = "10", .expected = 10},
+        {.input = "-5", .expected = -5},
+        {.input = "-10", .expected = -10},
+        {.input = "5 + 5 + 5 + 5 - 10", .expected = 10},
+        {.input = "2 * 2 * 2 * 2 * 2", .expected = 32},
+        {.input = "-50 + 100 + -50", .expected = 0},
+        {.input = "5 * 2 + 10", .expected = 20},
+        {.input = "5 + 2 * 10", .expected = 25},
+        {.input = "20 + 2 * -10", .expected = 0},
+        {.input = "50 / 2 * 2 + 10", .expected = 60},
+        {.input = "2 * (5 + 10)", .expected = 30},
+        {.input = "3 * 3 * 3 + 10", .expected = 37},
+        {.input = "3 * (3 * 3) + 10", .expected = 37},
+        {.input = "(5 + 10 * 2 + 15 / 3) * 2 + -10", .expected = 50},
     };
 
-    for (auto tt : tests) {
+    for (const auto &tt : tests) {
         auto evaluated = testEval(tt.input);
         ASSERT_NE(evaluated, nullptr);
         testIntegerObject(evaluated.get(), tt.expected);
@@ -81,27 +82,27 @@ TEST(Evaluator, EvalBooleanExpression) {
         const bool expected;
     };
     std::vector<test> tests = {
-        {"true", true},
-        {"false", false},
-        {"1 < 2", true},
-        {"1 > 2", false},
-        {"1 < 1", false},
-        {"1 > 1", false},
-        {"1 == 1", true},
-        {"1 != 1", false},
-        {"1 == 2", false},
-        {"1 != 2", true},
-        {"true == true", true},
-        {"false == false", true},
-        {"true == false", false},
-        {"true != false", true},
-        {"false != true", true},
-        {"(1 < 2) == true", true},
-        {"(1 < 2) == false", false},
-        {"(1 > 2) == true", false},
-        {"(1 > 2) == false", true},
+        {.input = "true", .expected = true},
+        {.input = "false", .expected = false},
+        {.input = "1 < 2", .expected = true},
+        {.input = "1 > 2", .expected = false},
+        {.input = "1 < 1", .expected = false},
+        {.input = "1 > 1", .expected = false},
+        {.input = "1 == 1", .expected = true},
+        {.input = "1 != 1", .expected = false},
+        {.input = "1 == 2", .expected = false},
+        {.input = "1 != 2", .expected = true},
+        {.input = "true == true", .expected = true},
+        {.input = "false == false", .expected = true},
+        {.input = "true == false", .expected = false},
+        {.input = "true != false", .expected = true},
+        {.input = "false != true", .expected = true},
+        {.input = "(1 < 2) == true", .expected = true},
+        {.input = "(1 < 2) == false", .expected = false},
+        {.input = "(1 > 2) == true", .expected = false},
+        {.input = "(1 > 2) == false", .expected = true},
     };
-    for (auto tst : tests) {
+    for (const auto &tst : tests) {
         auto evaluated = testEval(tst.input);
         ASSERT_NE(evaluated, nullptr);
         testBooleanObject(evaluated.get(), tst.expected);
@@ -113,10 +114,13 @@ TEST(Evaluator, BangOperator) {
         const std::string input;
         const bool expected;
     };
-    std::vector<test> tests{{"!true", false},   {"!false", true},
-                            {"!5", false},      {"!!true", true},
-                            {"!!false", false}, {"!!5", true}};
-    for (auto tst : tests) {
+    std::vector<test> tests{{.input = "!true", .expected = false},
+                            {.input = "!false", .expected = true},
+                            {.input = "!5", .expected = false},
+                            {.input = "!!true", .expected = true},
+                            {.input = "!!false", .expected = false},
+                            {.input = "!!5", .expected = true}};
+    for (const auto &tst : tests) {
         auto evaluated = testEval(tst.input);
         ASSERT_NE(evaluated, nullptr);
         testBooleanObject(evaluated.get(), tst.expected);
@@ -130,16 +134,16 @@ TEST(Evaluator, IfElseExpression) {
     };
 
     std::vector<test> tests = {
-        {"if (true) { 10 }", 10},
-        {"if (false) { 10 }", std::monostate()},
-        {"if (1) { 10 }", 10},
-        {"if (1 < 2) { 10 }", 10},
-        {"if (1 > 2) { 10 }", std::monostate()},
-        {"if (1 > 2) { 10 } else { 20 }", 20},
-        {"if (1 < 2) { 10 } else { 20 }", 10},
+        {.input = "if (true) { 10 }", .expected = 10},
+        {.input = "if (false) { 10 }", .expected = std::monostate()},
+        {.input = "if (1) { 10 }", .expected = 10},
+        {.input = "if (1 < 2) { 10 }", .expected = 10},
+        {.input = "if (1 > 2) { 10 }", .expected = std::monostate()},
+        {.input = "if (1 > 2) { 10 } else { 20 }", .expected = 20},
+        {.input = "if (1 < 2) { 10 } else { 20 }", .expected = 10},
     };
 
-    for (auto tst : tests) {
+    for (const auto &tst : tests) {
         auto evaluated = testEval(tst.input);
         ASSERT_NE(evaluated, nullptr);
         if (std::holds_alternative<long int>(tst.expected)) {
@@ -158,17 +162,17 @@ TEST(Evaluator, TestReturnStatements) {
     };
 
     std::vector<test> tests = {
-        {"return 10;", 10},
-        {"return 10; 9;", 10},
-        {"return 2 * 5; 9;", 10},
-        {"9; return 2 * 5; 9;", 10},
+        {.input = "return 10;", .expected = 10},
+        {.input = "return 10; 9;", .expected = 10},
+        {.input = "return 2 * 5; 9;", .expected = 10},
+        {.input = "9; return 2 * 5; 9;", .expected = 10},
         {
-            "if (10 > 1){if (10 > 1){return 10;}return 1;}",
-            10,
+            .input = "if (10 > 1){if (10 > 1){return 10;}return 1;}",
+            .expected = 10,
         },
     };
 
-    for (auto tst : tests) {
+    for (const auto &tst : tests) {
         auto evaluated = testEval(tst.input);
         ASSERT_NE(evaluated, nullptr);
         testIntegerObject(evaluated.get(), tst.expected);
@@ -183,44 +187,48 @@ TEST(Evaluator, ErrorHandling) {
 
     std::vector<test> tests = {
         {
-            "5 + true;",
-            "type mismatch: INTEGER + BOOLEAN",
+            .input = "5 + true;",
+            .expectedMessage = "type mismatch: INTEGER + BOOLEAN",
         },
         {
-            "5 + true; 5;",
-            "type mismatch: INTEGER + BOOLEAN",
+            .input = "5 + true; 5;",
+            .expectedMessage = "type mismatch: INTEGER + BOOLEAN",
         },
         {
-            "-true",
-            "unknown operator: -BOOLEAN",
+            .input = "-true",
+            .expectedMessage = "unknown operator: -BOOLEAN",
         },
         {
-            "true + false;",
-            "Unsupported infix operator for booleans. Got + expected == or !=",
+            .input = "true + false;",
+            .expectedMessage = "Unsupported infix operator for booleans. Got + "
+                               "expected == or !=",
         },
         {
-            "5; true - false; 5",
-            "Unsupported infix operator for booleans. Got - expected == or !=",
+            .input = "5; true - false; 5",
+            .expectedMessage = "Unsupported infix operator for booleans. Got - "
+                               "expected == or !=",
         },
         {
-            "if (10 > 1) { true + false; }",
-            "Unsupported infix operator for booleans. Got + expected == or !=",
+            .input = "if (10 > 1) { true + false; }",
+            .expectedMessage = "Unsupported infix operator for booleans. Got + "
+                               "expected == or !=",
         },
         {
-            "if (10 > 1){"
-            "  if (10 > 1) {"
-            "    return true + false;"
-            "  }"
-            "  return 1;"
-            "}",
-            "Unsupported infix operator for booleans. Got + expected == or !=",
+            .input = "if (10 > 1){"
+                     "  if (10 > 1) {"
+                     "    return true + false;"
+                     "  }"
+                     "  return 1;"
+                     "}",
+            .expectedMessage = "Unsupported infix operator for booleans. Got + "
+                               "expected == or !=",
         },
         {
-            "foobar",
-            "identifier not found: foobar",
+            .input = "foobar",
+            .expectedMessage = "identifier not found: foobar",
         },
     };
-    for (auto tst : tests) {
+    for (const auto &tst : tests) {
         auto evaluated = testEval(tst.input);
         ASSERT_NE(evaluated, nullptr);
 
@@ -241,13 +249,14 @@ TEST(Evaluator, LetStatements) {
     };
 
     std::vector<test> tests = {
-        {"let a = 5; a;", 5},
-        {"let a = 5 * 5; a;", 25},
-        {"let a = 5; let b = a; b;", 5},
-        {"let a = 5; let b = a; let c = a + b + 5; c;", 15},
+        {.input = "let a = 5; a;", .expected = 5},
+        {.input = "let a = 5 * 5; a;", .expected = 25},
+        {.input = "let a = 5; let b = a; b;", .expected = 5},
+        {.input = "let a = 5; let b = a; let c = a + b + 5; c;",
+         .expected = 15},
     };
 
-    for (auto tst : tests) {
+    for (const auto &tst : tests) {
         testIntegerObject(testEval(tst.input).get(), tst.expected);
     }
 }

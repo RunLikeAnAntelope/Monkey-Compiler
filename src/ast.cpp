@@ -1,6 +1,7 @@
 #include "ast.hpp"
 #include "helpers.hpp"
 #include <memory>
+#include <utility>
 
 namespace Ast {
 
@@ -40,7 +41,7 @@ std::string Program::String() {
 
 // Identifier stuff
 Identifier::Identifier(Token::Token token, std::string value)
-    : m_token(token), m_value(value) {};
+    : m_token(std::move(token)), m_value(std::move(value)) {};
 std::string Identifier::TokenLiteral() { return m_token.Literal; }
 
 std::string Identifier::String() { return m_value; }
@@ -53,7 +54,7 @@ std::string IntegerLiteral::TokenLiteral() { return m_token.Literal; }
 
 // PrefixExpression stuff
 PrefixExpression::PrefixExpression(Token::Token t, std::string op)
-    : m_token(t), m_op(op) {}
+    : m_token(std::move(t)), m_op(std::move(op)) {}
 
 std::string PrefixExpression::TokenLiteral() { return m_token.Literal; }
 
@@ -70,7 +71,7 @@ std::string PrefixExpression::String() {
 InfixExpression::InfixExpression(Token::Token t,
                                  std::unique_ptr<IExpression> left,
                                  std::string op)
-    : m_token(t), m_left(std::move(left)), m_op(op) {}
+    : m_token(std::move(t)), m_left(std::move(left)), m_op(std::move(op)) {}
 std::string InfixExpression::TokenLiteral() { return m_token.Literal; }
 
 std::string InfixExpression::String() {
@@ -89,7 +90,7 @@ std::string Boolean::String() { return m_token.Literal; }
 std::string Boolean::TokenLiteral() { return m_token.Literal; }
 
 // If Expression Stuff
-IfExpression::IfExpression(Token::Token token) : m_token(token) {};
+IfExpression::IfExpression(Token::Token token) : m_token(std::move(token)) {};
 
 std::string IfExpression::String() {
     std::string out;
@@ -107,7 +108,7 @@ std::string IfExpression::String() {
 std::string IfExpression::TokenLiteral() { return m_token.Literal; }
 
 // LetStatement stuff
-LetStatement::LetStatement(Token::Token token) : m_token(token) {};
+LetStatement::LetStatement(Token::Token token) : m_token(std::move(token)) {};
 
 std::string LetStatement::TokenLiteral() { return m_token.Literal; }
 
@@ -125,7 +126,8 @@ std::string LetStatement::String() {
 }
 
 // Return Statement Stuff
-ReturnStatement::ReturnStatement(Token::Token token) : m_token(token) {};
+ReturnStatement::ReturnStatement(Token::Token token)
+    : m_token(std::move(token)) {};
 std::string ReturnStatement::TokenLiteral() { return m_token.Literal; }
 
 std::string ReturnStatement::String() {
@@ -141,7 +143,7 @@ std::string ReturnStatement::String() {
 
 // Expression Statement Stuff
 ExpressionStatement::ExpressionStatement(Token::Token token)
-    : m_token(token) {};
+    : m_token(std::move(token)) {};
 std::string ExpressionStatement::TokenLiteral() { return m_token.Literal; }
 
 std::string ExpressionStatement::String() {
@@ -152,7 +154,8 @@ std::string ExpressionStatement::String() {
 }
 
 // Block Statement Stuff
-BlockStatement::BlockStatement(Token::Token token) : m_token(token) {};
+BlockStatement::BlockStatement(Token::Token token)
+    : m_token(std::move(token)) {};
 
 std::string BlockStatement::TokenLiteral() { return m_token.Literal; }
 
@@ -165,11 +168,13 @@ std::string BlockStatement::String() {
 }
 
 // Function Literal Stuff
-FunctionLiteral::FunctionLiteral(Token::Token token) : m_token(token) {};
+FunctionLiteral::FunctionLiteral(Token::Token token)
+    : m_token(std::move(token)) {};
 
 std::string FunctionLiteral::String() {
     std::string out;
     std::vector<std::string> params;
+    params.reserve(this->m_parameters.size());
     for (auto &str : this->m_parameters) {
         params.push_back(str->String());
     }
@@ -186,11 +191,12 @@ std::string FunctionLiteral::TokenLiteral() { return m_token.Literal; }
 // Call Expression Stuff
 CallExpression::CallExpression(Token::Token token,
                                std::unique_ptr<IExpression> function)
-    : m_token(token), m_function(std::move(function)) {}
+    : m_token(std::move(token)), m_function(std::move(function)) {}
 
 std::string CallExpression::String() {
     std::string out;
     std::vector<std::string> arguments;
+    arguments.reserve(this->m_arguments.size());
     for (auto &str : this->m_arguments) {
         arguments.push_back(str->String());
     }

@@ -11,8 +11,8 @@ class Environment {
         std::shared_ptr<Object::IObject> obj;
         bool ok;
     };
-    EnvObj Get(std::string name);
-    void Set(std::string name, std::shared_ptr<Object::IObject>);
+    EnvObj Get(const std::string &name);
+    void Set(const std::string &name, std::shared_ptr<Object::IObject>);
 
   private:
     std::unordered_map<std::string, std::shared_ptr<Object::IObject>>
@@ -34,7 +34,7 @@ class Evaluator {
 
     static std::shared_ptr<Object::IObject>
     evalPrefixExpression(const std::string &op,
-                         std::shared_ptr<Object::IObject> right);
+                         const std::shared_ptr<Object::IObject> &right);
 
     static std::shared_ptr<Object::IObject>
     evalBangOperatorExpression(Object::IObject *right);

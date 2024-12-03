@@ -5,7 +5,7 @@
 #include <unordered_map>
 namespace Parser {
 
-enum Precedence {
+enum Precedence : std::uint8_t {
     EMPTY_PRECEDENCE,
     LOWEST,
     EQUALS,
@@ -34,7 +34,7 @@ struct Parser {
     std::unordered_map<Token::TokenType, prefixParseFn> m_prefixParseFns;
     std::unordered_map<Token::TokenType, infixParseFn> m_infixParseFns;
     std::vector<std::string> m_errors;
-    Parser(Lexer::Lexer &lexer);
+    explicit Parser(Lexer::Lexer &lexer);
 
     void nextToken();
     Ast::Program ParseProgram();

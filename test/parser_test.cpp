@@ -5,8 +5,10 @@
 #include <gtest/gtest.h>
 #include <iterator>
 #include <memory>
+#include <utility>
 using Common::variant;
-void testLetStatement(std::unique_ptr<Ast::IStatement> &s, std::string name) {
+static void testLetStatement(std::unique_ptr<Ast::IStatement> &s,
+                             const std::string &name) {
     Ast::IStatement *stmt = s.get();
     Ast::LetStatement *letStmt = dynamic_cast<Ast::LetStatement *>(stmt);
     if (letStmt != nullptr) {
@@ -18,15 +20,15 @@ void testLetStatement(std::unique_ptr<Ast::IStatement> &s, std::string name) {
     }
 }
 
-void checkParserErrors(Parser::Parser p) {
+static void checkParserErrors(const Parser::Parser &p) {
     std::string errors;
-    for (std::string error : p.m_errors) {
+    for (const std::string &error : p.m_errors) {
         errors.append("ParserError:" + error + "\n");
     }
-    ASSERT_EQ(std::ssize(p.m_errors), 0) << errors << std::endl;
+    ASSERT_EQ(std::ssize(p.m_errors), 0) << errors << '\n';
 }
 
-void testIntegerLiteral(Ast::IExpression &il, long int value) {
+static void testIntegerLiteral(Ast::IExpression &il, long int value) {
     try {
         auto integ = dynamic_cast<Ast::IntegerLiteral &>(il);
         ASSERT_EQ(integ.m_value, value)
@@ -41,7 +43,7 @@ void testIntegerLiteral(Ast::IExpression &il, long int value) {
     }
 }
 
-void testBooleanLiteral(Ast::IExpression &exp, bool value) {
+static void testBooleanLiteral(Ast::IExpression &exp, bool value) {
     try {
         auto boolean = dynamic_cast<Ast::Boolean &>(exp);
 
@@ -57,7 +59,7 @@ void testBooleanLiteral(Ast::IExpression &exp, bool value) {
     }
 }
 
-void testIdentifier(Ast::IExpression &exp, std::string value) {
+static void testIdentifier(Ast::IExpression &exp, const std::string &value) {
     try {
         auto ident = dynamic_cast<Ast::Identifier &>(exp);
 
@@ -72,7 +74,8 @@ void testIdentifier(Ast::IExpression &exp, std::string value) {
     }
 }
 
-void testLiteralExpression(Ast::IExpression &exp, variant expectedValue) {
+static void testLiteralExpression(Ast::IExpression &exp,
+                                  variant expectedValue) {
     if (std::holds_alternative<long int>(expectedValue)) {
         testIntegerLiteral(exp, std::get<long int>(expectedValue));
     } else if (std::holds_alternative<std::string>(expectedValue)) {
@@ -85,13 +88,13 @@ void testLiteralExpression(Ast::IExpression &exp, variant expectedValue) {
     }
 }
 
-void testInfixExpression(Ast::IExpression *exp, variant left, std::string op,
-                         variant right) {
+static void testInfixExpression(Ast::IExpression *exp, variant left,
+                                const std::string &op, variant right) {
     auto opExp = dynamic_cast<Ast::InfixExpression *>(exp);
     ASSERT_TRUE(opExp != nullptr) << "exp is not an InfixExpression";
 
-    testLiteralExpression(*opExp->m_left, left);
-    testLiteralExpression(*opExp->m_right, right);
+    testLiteralExpression(*opExp->m_left, std::move(left));
+    testLiteralExpression(*opExp->m_right, std::move(right));
     ASSERT_EQ(opExp->m_op, op)
         << "exp.Operator is not " << op << ". got=" << opExp->m_op;
 }
@@ -104,12 +107,16 @@ TEST(Parser, LetStatements) {
     };
 
     std::vector<LetStmtTest> tests = {
-        {"let x = 5;", "x", 5},
-        {"let y = true;", "y", true},
-        {"let foobar = y;", "foobar", "y"},
+        {.input = "let x = 5;", .expectedIdentifier = "x", .expectedValue = 5},
+        {.input = "let y = true;",
+         .expectedIdentifier = "y",
+         .expectedValue = true},
+        {.input = "let foobar = y;",
+         .expectedIdentifier = "foobar",
+         .expectedValue = "y"},
     };
 
-    for (LetStmtTest test : tests) {
+    for (const LetStmtTest &test : tests) {
         Lexer::Lexer l(test.input);
         Parser::Parser p(l);
         Ast::Program program = p.ParseProgram();
@@ -148,7 +155,7 @@ TEST(Parser, LetParser) {
     // ASSERT_FALSE(program == nullptr) << "ParseProgram() returned a
     // nullptr";
 
-    for (unsigned int i = 0; auto test : tests) {
+    for (unsigned int i = 0; const auto &test : tests) {
         testLetStatement(program.m_statements[i], test.expectedIdentier);
         i++;
     }
@@ -180,10 +187,11 @@ TEST(Parser, ReturnStatements) {
         variant expectedValue;
     };
 
-    std::vector<test> tests = {
-        {"return 5;", 5}, {"return true;", true}, {"return foobar;", "foobar"}};
+    std::vector<test> tests = {{.input = "return 5;", .expectedValue = 5},
+                               {.input = "return true;", .expectedValue = true},
+                               {"return foobar;", "foobar"}};
 
-    for (auto tst : tests) {
+    for (const auto &tst : tests) {
         Lexer::Lexer l(tst.input);
         Parser::Parser p(l);
         Ast::Program program = p.ParseProgram();
@@ -257,8 +265,9 @@ TEST(Parser, BooleanLiteralExpression) {
         bool expectedBoolean;
     };
 
-    std::vector<booleanTest> tests = {{"true;", true}, {"false;", false}};
-    for (booleanTest btest : tests) {
+    std::vector<booleanTest> tests = {
+        {.input = "true;", .expectedBoolean = true}, {"false;", false}};
+    for (const booleanTest &btest : tests) {
         Lexer::Lexer l(btest.input);
         Parser::Parser p(l);
         Ast::Program program = p.ParseProgram();
@@ -286,15 +295,15 @@ TEST(Parser, ParsingPrefixExpressions) {
     };
 
     std::vector<PrefixTest> tests = {
-        {"!5;", "!", 5},
-        {"-15;", "-", 15},
-        {"!foobar;", "!", "foobar"},
-        {"-foobar;", "-", "foobar"},
-        {"!true;", "!", true},
-        {"!false;", "!", false},
+        {.input = "!5;", .op = "!", .value = 5},
+        {.input = "-15;", .op = "-", .value = 15},
+        {.input = "!foobar;", .op = "!", .value = "foobar"},
+        {.input = "-foobar;", .op = "-", .value = "foobar"},
+        {.input = "!true;", .op = "!", .value = true},
+        {.input = "!false;", .op = "!", .value = false},
     };
 
-    for (auto test : tests) {
+    for (const auto &test : tests) {
         Lexer::Lexer l(test.input);
         Parser::Parser p(l);
         Ast::Program program = p.ParseProgram();
@@ -324,19 +333,28 @@ TEST(Parser, ParsingInfixExpressions) {
     };
 
     std::vector<InfixTest> tests = {
-        {"5 + 5;", 5, "+", 5},
-        {"5 - 5;", 5, "-", 5},
-        {"5 * 5;", 5, "*", 5},
-        {"5 / 5;", 5, "/", 5},
-        {"5 > 5;", 5, ">", 5},
-        {"5 < 5;", 5, "<", 5},
-        {"5 == 5;", 5, "==", 5},
-        {"5 != 5;", 5, "!=", 5},
-        {"true == true;", true, "==", true},
-        {"true != false", true, "!=", false},
-        {"false == false", false, "==", false},
+        {.input = "5 + 5;", .leftValue = 5, .op = "+", .rightValue = 5},
+        {.input = "5 - 5;", .leftValue = 5, .op = "-", .rightValue = 5},
+        {.input = "5 * 5;", .leftValue = 5, .op = "*", .rightValue = 5},
+        {.input = "5 / 5;", .leftValue = 5, .op = "/", .rightValue = 5},
+        {.input = "5 > 5;", .leftValue = 5, .op = ">", .rightValue = 5},
+        {.input = "5 < 5;", .leftValue = 5, .op = "<", .rightValue = 5},
+        {.input = "5 == 5;", .leftValue = 5, .op = "==", .rightValue = 5},
+        {.input = "5 != 5;", .leftValue = 5, .op = "!=", .rightValue = 5},
+        {.input = "true == true;",
+         .leftValue = true,
+         .op = "==",
+         .rightValue = true},
+        {.input = "true != false",
+         .leftValue = true,
+         .op = "!=",
+         .rightValue = false},
+        {.input = "false == false",
+         .leftValue = false,
+         .op = "==",
+         .rightValue = false},
     };
-    for (auto test : tests) {
+    for (const auto &test : tests) {
         Lexer::Lexer l(test.input);
         Parser::Parser p(l);
         Ast::Program program = p.ParseProgram();
@@ -367,104 +385,104 @@ TEST(Parser, OperatorPrecedenceParsing) {
 
     std::vector<OPPTest> tests = {
         {
-            "-a * b",
-            "((-a) * b)",
+            .input = "-a * b",
+            .expected = "((-a) * b)",
         },
         {
-            "!-a",
-            "(!(-a))",
+            .input = "!-a",
+            .expected = "(!(-a))",
         },
         {
-            "a + b + c",
-            "((a + b) + c)",
+            .input = "a + b + c",
+            .expected = "((a + b) + c)",
         },
         {
-            "a + b - c",
-            "((a + b) - c)",
+            .input = "a + b - c",
+            .expected = "((a + b) - c)",
         },
         {
-            "a * b * c",
-            "((a * b) * c)",
+            .input = "a * b * c",
+            .expected = "((a * b) * c)",
         },
         {
-            "a * b / c",
-            "((a * b) / c)",
+            .input = "a * b / c",
+            .expected = "((a * b) / c)",
         },
         {
-            "a + b / c",
-            "(a + (b / c))",
+            .input = "a + b / c",
+            .expected = "(a + (b / c))",
         },
         {
-            "a + b * c + d / e - f",
-            "(((a + (b * c)) + (d / e)) - f)",
+            .input = "a + b * c + d / e - f",
+            .expected = "(((a + (b * c)) + (d / e)) - f)",
         },
         {
-            "3 + 4; -5 * 5",
-            "(3 + 4)((-5) * 5)",
+            .input = "3 + 4; -5 * 5",
+            .expected = "(3 + 4)((-5) * 5)",
         },
         {
-            "5 > 4 == 3 < 4",
-            "((5 > 4) == (3 < 4))",
+            .input = "5 > 4 == 3 < 4",
+            .expected = "((5 > 4) == (3 < 4))",
         },
         {
-            "5 < 4 != 3 > 4",
-            "((5 < 4) != (3 > 4))",
+            .input = "5 < 4 != 3 > 4",
+            .expected = "((5 < 4) != (3 > 4))",
         },
         {
-            "3 + 4 * 5 == 3 * 1 + 4 * 5",
-            "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))",
+            .input = "3 + 4 * 5 == 3 * 1 + 4 * 5",
+            .expected = "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))",
         },
         {
-            "true",
-            "true",
+            .input = "true",
+            .expected = "true",
         },
         {
-            "false",
-            "false",
+            .input = "false",
+            .expected = "false",
         },
         {
-            "3 > 5 == false",
-            "((3 > 5) == false)",
+            .input = "3 > 5 == false",
+            .expected = "((3 > 5) == false)",
         },
         {
-            "3 < 5 == true",
-            "((3 < 5) == true)",
+            .input = "3 < 5 == true",
+            .expected = "((3 < 5) == true)",
         },
         {
-            "1 + (2 + 3) + 4",
-            "((1 + (2 + 3)) + 4)",
+            .input = "1 + (2 + 3) + 4",
+            .expected = "((1 + (2 + 3)) + 4)",
         },
         {
-            "(5 + 5) * 2",
-            "((5 + 5) * 2)",
+            .input = "(5 + 5) * 2",
+            .expected = "((5 + 5) * 2)",
         },
         {
-            "2 / (5 + 5)",
-            "(2 / (5 + 5))",
+            .input = "2 / (5 + 5)",
+            .expected = "(2 / (5 + 5))",
         },
         {
-            "-(5 + 5)",
-            "(-(5 + 5))",
+            .input = "-(5 + 5)",
+            .expected = "(-(5 + 5))",
         },
         {
-            "!(true == true)",
-            "(!(true == true))",
+            .input = "!(true == true)",
+            .expected = "(!(true == true))",
         },
         {
-            "a + add(b * c) + d",
-            "((a + add((b * c))) + d)",
+            .input = "a + add(b * c) + d",
+            .expected = "((a + add((b * c))) + d)",
         },
         {
-            "add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))",
-            "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))",
+            .input = "add(a, b, 1, 2 * 3, 4 + 5, add(6, 7 * 8))",
+            .expected = "add(a, b, 1, (2 * 3), (4 + 5), add(6, (7 * 8)))",
         },
         {
-            "add(a + b + c * d / f + g)",
-            "add((((a + b) + ((c * d) / f)) + g))",
+            .input = "add(a + b + c * d / f + g)",
+            .expected = "add((((a + b) + ((c * d) / f)) + g))",
         },
     };
 
-    for (auto test : tests) {
+    for (const auto &test : tests) {
         Lexer::Lexer l(test.input);
         Parser::Parser p(l);
         Ast::Program program = p.ParseProgram();
@@ -616,9 +634,10 @@ TEST(Parser, FunctionParameterParsing) {
         std::vector<std::string> expectedParams;
     };
 
-    std::vector<test> tests = {{"fn() {};", {}},
-                               {"fn(x) {};", {"x"}},
-                               {"fn(x, y ,z) {}", {"x", "y", "z"}}};
+    std::vector<test> tests = {
+        {.input = "fn() {};", .expectedParams = {}},
+        {.input = "fn(x) {};", .expectedParams = {"x"}},
+        {.input = "fn(x, y ,z) {}", .expectedParams = {"x", "y", "z"}}};
 
     for (auto tst : tests) {
         Lexer::Lexer l(tst.input);

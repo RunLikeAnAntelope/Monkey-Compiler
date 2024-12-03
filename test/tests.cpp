@@ -1,89 +1,121 @@
-#include "ast.hpp"
 #include "lexer.hpp"
 #include "token.hpp"
 #include <gtest/gtest.h>
-#include <memory>
 #include <parser.hpp>
 
 TEST(TestNextToken, Works) {
-  struct Test {
-    Token::TokenType expectedToken;
-    std::string expectedLiteral;
-  };
+    struct Test {
+        Token::TokenType expectedToken;
+        std::string expectedLiteral;
+    };
 
-  std::vector<Test> tests = {
-      Test{Token::LET, "let"},     Test{Token::IDENT, "five"},
-      Test{Token::ASSIGN, "="},    Test{Token::INT, "5"},
-      Test{Token::SEMICOLON, ";"}, Test{Token::LET, "let"},
-      Test{Token::IDENT, "ten"},   Test{Token::ASSIGN, "="},
-      Test{Token::INT, "10"},      Test{Token::SEMICOLON, ";"},
-      Test{Token::LET, "let"},     Test{Token::IDENT, "add"},
-      Test{Token::ASSIGN, "="},    Test{Token::FUNCTION, "fn"},
-      Test{Token::LPAREN, "("},    Test{Token::IDENT, "x"},
-      Test{Token::COMMA, ","},     Test{Token::IDENT, "y"},
-      Test{Token::RPAREN, ")"},    Test{Token::LBRACE, "{"},
-      Test{Token::IDENT, "x"},     Test{Token::PLUS, "+"},
-      Test{Token::IDENT, "y"},     Test{Token::SEMICOLON, ";"},
-      Test{Token::RBRACE, "}"},    Test{Token::SEMICOLON, ";"},
-      Test{Token::LET, "let"},     Test{Token::IDENT, "result"},
-      Test{Token::ASSIGN, "="},    Test{Token::IDENT, "add"},
-      Test{Token::LPAREN, "("},    Test{Token::IDENT, "five"},
-      Test{Token::COMMA, ","},     Test{Token::IDENT, "ten"},
-      Test{Token::RPAREN, ")"},    Test{Token::SEMICOLON, ";"},
-      Test{Token::BANG, "!"},      Test{Token::MINUS, "-"},
-      Test{Token::SLASH, "/"},     Test{Token::ASTERISK, "*"},
-      Test{Token::INT, "5"},       Test{Token::SEMICOLON, ";"},
-      Test{Token::INT, "5"},       Test{Token::LT, "<"},
-      Test{Token::INT, "10"},      Test{Token::GT, ">"},
-      Test{Token::INT, "5"},       Test{Token::SEMICOLON, ";"},
-      Test{Token::IF, "if"},       Test{Token::LPAREN, "("},
-      Test{Token::INT, "5"},       Test{Token::LT, "<"},
-      Test{Token::INT, "10"},      Test{Token::RPAREN, ")"},
-      Test{Token::LBRACE, "{"},    Test{Token::RETURN, "return"},
-      Test{Token::TRUE, "true"},   Test{Token::SEMICOLON, ";"},
-      Test{Token::RBRACE, "}"},    Test{Token::ELSE, "else"},
-      Test{Token::LBRACE, "{"},    Test{Token::RETURN, "return"},
-      Test{Token::FALSE, "false"}, Test{Token::SEMICOLON, ";"},
-      Test{Token::RBRACE, "}"},    Test{Token::INT, "10"},
-      Test{Token::EQ, "=="},       Test{Token::INT, "10"},
-      Test{Token::SEMICOLON, ";"}, Test{Token::INT, "10"},
-      Test{Token::NOT_EQ, "!="},   Test{Token::INT, "9"},
-      Test{Token::SEMICOLON, ";"},
+    std::vector<Test> tests = {
+        Test{.expectedToken = Token::LET, .expectedLiteral = "let"},
+        Test{.expectedToken = Token::IDENT, .expectedLiteral = "five"},
+        Test{.expectedToken = Token::ASSIGN, .expectedLiteral = "="},
+        Test{.expectedToken = Token::INT, .expectedLiteral = "5"},
+        Test{.expectedToken = Token::SEMICOLON, .expectedLiteral = ";"},
+        Test{.expectedToken = Token::LET, .expectedLiteral = "let"},
+        Test{.expectedToken = Token::IDENT, .expectedLiteral = "ten"},
+        Test{.expectedToken = Token::ASSIGN, .expectedLiteral = "="},
+        Test{.expectedToken = Token::INT, .expectedLiteral = "10"},
+        Test{.expectedToken = Token::SEMICOLON, .expectedLiteral = ";"},
+        Test{.expectedToken = Token::LET, .expectedLiteral = "let"},
+        Test{.expectedToken = Token::IDENT, .expectedLiteral = "add"},
+        Test{.expectedToken = Token::ASSIGN, .expectedLiteral = "="},
+        Test{.expectedToken = Token::FUNCTION, .expectedLiteral = "fn"},
+        Test{.expectedToken = Token::LPAREN, .expectedLiteral = "("},
+        Test{.expectedToken = Token::IDENT, .expectedLiteral = "x"},
+        Test{.expectedToken = Token::COMMA, .expectedLiteral = ","},
+        Test{.expectedToken = Token::IDENT, .expectedLiteral = "y"},
+        Test{.expectedToken = Token::RPAREN, .expectedLiteral = ")"},
+        Test{.expectedToken = Token::LBRACE, .expectedLiteral = "{"},
+        Test{.expectedToken = Token::IDENT, .expectedLiteral = "x"},
+        Test{.expectedToken = Token::PLUS, .expectedLiteral = "+"},
+        Test{.expectedToken = Token::IDENT, .expectedLiteral = "y"},
+        Test{.expectedToken = Token::SEMICOLON, .expectedLiteral = ";"},
+        Test{.expectedToken = Token::RBRACE, .expectedLiteral = "}"},
+        Test{.expectedToken = Token::SEMICOLON, .expectedLiteral = ";"},
+        Test{.expectedToken = Token::LET, .expectedLiteral = "let"},
+        Test{.expectedToken = Token::IDENT, .expectedLiteral = "result"},
+        Test{.expectedToken = Token::ASSIGN, .expectedLiteral = "="},
+        Test{.expectedToken = Token::IDENT, .expectedLiteral = "add"},
+        Test{.expectedToken = Token::LPAREN, .expectedLiteral = "("},
+        Test{.expectedToken = Token::IDENT, .expectedLiteral = "five"},
+        Test{.expectedToken = Token::COMMA, .expectedLiteral = ","},
+        Test{.expectedToken = Token::IDENT, .expectedLiteral = "ten"},
+        Test{.expectedToken = Token::RPAREN, .expectedLiteral = ")"},
+        Test{.expectedToken = Token::SEMICOLON, .expectedLiteral = ";"},
+        Test{.expectedToken = Token::BANG, .expectedLiteral = "!"},
+        Test{.expectedToken = Token::MINUS, .expectedLiteral = "-"},
+        Test{.expectedToken = Token::SLASH, .expectedLiteral = "/"},
+        Test{.expectedToken = Token::ASTERISK, .expectedLiteral = "*"},
+        Test{.expectedToken = Token::INT, .expectedLiteral = "5"},
+        Test{.expectedToken = Token::SEMICOLON, .expectedLiteral = ";"},
+        Test{.expectedToken = Token::INT, .expectedLiteral = "5"},
+        Test{.expectedToken = Token::LT, .expectedLiteral = "<"},
+        Test{.expectedToken = Token::INT, .expectedLiteral = "10"},
+        Test{.expectedToken = Token::GT, .expectedLiteral = ">"},
+        Test{.expectedToken = Token::INT, .expectedLiteral = "5"},
+        Test{.expectedToken = Token::SEMICOLON, .expectedLiteral = ";"},
+        Test{.expectedToken = Token::IF, .expectedLiteral = "if"},
+        Test{.expectedToken = Token::LPAREN, .expectedLiteral = "("},
+        Test{.expectedToken = Token::INT, .expectedLiteral = "5"},
+        Test{.expectedToken = Token::LT, .expectedLiteral = "<"},
+        Test{.expectedToken = Token::INT, .expectedLiteral = "10"},
+        Test{.expectedToken = Token::RPAREN, .expectedLiteral = ")"},
+        Test{.expectedToken = Token::LBRACE, .expectedLiteral = "{"},
+        Test{.expectedToken = Token::RETURN, .expectedLiteral = "return"},
+        Test{.expectedToken = Token::TRUE, .expectedLiteral = "true"},
+        Test{.expectedToken = Token::SEMICOLON, .expectedLiteral = ";"},
+        Test{.expectedToken = Token::RBRACE, .expectedLiteral = "}"},
+        Test{.expectedToken = Token::ELSE, .expectedLiteral = "else"},
+        Test{.expectedToken = Token::LBRACE, .expectedLiteral = "{"},
+        Test{.expectedToken = Token::RETURN, .expectedLiteral = "return"},
+        Test{.expectedToken = Token::FALSE, .expectedLiteral = "false"},
+        Test{.expectedToken = Token::SEMICOLON, .expectedLiteral = ";"},
+        Test{.expectedToken = Token::RBRACE, .expectedLiteral = "}"},
+        Test{.expectedToken = Token::INT, .expectedLiteral = "10"},
+        Test{.expectedToken = Token::EQ, .expectedLiteral = "=="},
+        Test{.expectedToken = Token::INT, .expectedLiteral = "10"},
+        Test{.expectedToken = Token::SEMICOLON, .expectedLiteral = ";"},
+        Test{.expectedToken = Token::INT, .expectedLiteral = "10"},
+        Test{.expectedToken = Token::NOT_EQ, .expectedLiteral = "!="},
+        Test{.expectedToken = Token::INT, .expectedLiteral = "9"},
+        Test{.expectedToken = Token::SEMICOLON, .expectedLiteral = ";"},
 
-      Test{Token::EOF_, ""}};
+        Test{.expectedToken = Token::EOF_, .expectedLiteral = ""}};
 
-  std::string input = "let five = 5;\n"
-                      "let ten = 10;\n"
-                      "let add = fn(x,y) {\n"
-                      "    x+y;\n"
-                      "};\n"
-                      "let result = add(five, ten);\n"
-                      "!-/*5\n;"
-                      "5 < 10 > 5;"
-                      "if (5 < 10) {"
-                      "    return true;"
-                      "} else {"
-                      "   return false;"
-                      "}"
-                      "10 == 10;"
-                      "10 != 9;";
+    std::string input = "let five = 5;\n"
+                        "let ten = 10;\n"
+                        "let add = fn(x,y) {\n"
+                        "    x+y;\n"
+                        "};\n"
+                        "let result = add(five, ten);\n"
+                        "!-/*5\n;"
+                        "5 < 10 > 5;"
+                        "if (5 < 10) {"
+                        "    return true;"
+                        "} else {"
+                        "   return false;"
+                        "}"
+                        "10 == 10;"
+                        "10 != 9;";
 
-  Lexer::Lexer l(input);
+    Lexer::Lexer l(input);
 
-  Token::Token tok{};
-  for (unsigned int i = 1; auto test : tests) {
-    tok = l.NextToken();
-    ASSERT_EQ(tok.Type, test.expectedToken)
-        << "tests[" << i << "] - "
-        << "tokentype wrong: expected=" << test.expectedToken
-        << ", got=" << tok.Type;
+    Token::Token tok{};
+    for (unsigned int i = 1; const auto &test : tests) {
+        tok = l.NextToken();
+        ASSERT_EQ(tok.Type, test.expectedToken)
+            << "tests[" << i << "] - "
+            << "tokentype wrong: expected=" << test.expectedToken
+            << ", got=" << tok.Type;
 
-    ASSERT_EQ(tok.Literal, test.expectedLiteral)
-        << "tests[" << i << "] - "
-        << "literal wrong: expected=" << test.expectedToken
-        << ", got=" << tok.Type;
-    i++;
-  }
+        ASSERT_EQ(tok.Literal, test.expectedLiteral)
+            << "tests[" << i << "] - "
+            << "literal wrong: expected=" << test.expectedToken
+            << ", got=" << tok.Type;
+        i++;
+    }
 }
-
-

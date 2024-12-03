@@ -23,17 +23,18 @@ void Start() {
         }
         auto evaluated = evaluator.Eval(&program);
         if (evaluated != nullptr && evaluated.get() != nullptr) {
-            std::cout << evaluated.get()->Inspect() << std::endl;
+            std::cout << evaluated.get()->Inspect() << '\n';
         }
     }
 }
 
-void printParserErrors(std::vector<std::string> errors) // namespace Repl
+static void
+printParserErrors(const std::vector<std::string> &errors) // namespace Repl
 {
     std::cout << "Woops! We ran into some monkey business here!\n"
               << " parser errors:\n";
-    for (auto error : errors) {
-        std::cout << "\t" << error << std::endl;
+    for (const auto &error : errors) {
+        std::cout << "\t" << error << '\n';
     }
 }
 } // namespace Repl

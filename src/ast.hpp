@@ -6,7 +6,7 @@
 
 namespace Ast {
 
-enum class Type {
+enum class Type : std::uint8_t {
     INODE,
     ISTATEMENT,
     IEXPRESSION,
@@ -34,14 +34,14 @@ struct INode {
 
 struct IStatement : public INode {
     virtual void statementNode() = 0;
-    virtual ~IStatement() = default;
-    virtual enum Type Type() = 0;
+    ~IStatement() override = default;
+    enum Type Type() override = 0;
 };
 
 struct IExpression : public INode {
     virtual void expressionNode() = 0;
-    virtual ~IExpression() = default;
-    virtual enum Type Type() = 0;
+    ~IExpression() override = default;
+    enum Type Type() override = 0;
 };
 
 struct Program : public INode {
@@ -67,7 +67,7 @@ struct IntegerLiteral : public IExpression {
     Token::Token m_token;
     long int m_value;
 
-    IntegerLiteral(Token::Token token);
+    explicit IntegerLiteral(Token::Token token);
     std::string TokenLiteral() override;
     void expressionNode() override {};
     std::string String() override;
@@ -104,7 +104,7 @@ struct Boolean : public IExpression {
     Token::Token m_token;
     bool m_value;
 
-    Boolean(Token::Token token);
+    explicit Boolean(Token::Token token);
     std::string TokenLiteral() override;
     void expressionNode() override {};
     std::string String() override;
@@ -118,7 +118,7 @@ struct BlockStatement : public IStatement {
     Token::Token m_token;
     std::vector<std::unique_ptr<IStatement>> m_statements;
 
-    BlockStatement(Token::Token token);
+    explicit BlockStatement(Token::Token token);
     std::string TokenLiteral() override;
     void statementNode() override {};
     std::string String() override;
@@ -131,7 +131,7 @@ struct IfExpression : public IExpression {
     std::unique_ptr<BlockStatement> m_consequence;
     std::unique_ptr<BlockStatement> m_alternative;
 
-    IfExpression(Token::Token token);
+    explicit IfExpression(Token::Token token);
     void expressionNode() override {};
     std::string TokenLiteral() override;
     std::string String() override;
@@ -143,7 +143,7 @@ struct LetStatement : public IStatement {
     std::unique_ptr<Identifier> m_name;
     std::unique_ptr<IExpression> m_expression;
 
-    LetStatement(Token::Token token);
+    explicit LetStatement(Token::Token token);
 
     std::string TokenLiteral() override;
     void statementNode() override {};
@@ -155,7 +155,7 @@ struct ReturnStatement : public IStatement {
     Token::Token m_token;
     std::unique_ptr<IExpression> m_returnValue;
 
-    ReturnStatement(Token::Token token);
+    explicit ReturnStatement(Token::Token token);
     std::string TokenLiteral() override;
     void statementNode() override {};
     std::string String() override;
@@ -166,7 +166,7 @@ struct ExpressionStatement : public IStatement {
     Token::Token m_token;
     std::unique_ptr<IExpression> m_expression;
 
-    ExpressionStatement(Token::Token token);
+    explicit ExpressionStatement(Token::Token token);
 
     std::string TokenLiteral() override;
     void statementNode() override {};
@@ -179,7 +179,7 @@ struct FunctionLiteral : public IExpression {
     std::vector<std::unique_ptr<Identifier>> m_parameters;
     std::unique_ptr<BlockStatement> m_body;
 
-    FunctionLiteral(Token::Token token);
+    explicit FunctionLiteral(Token::Token token);
     void expressionNode() override {};
     std::string TokenLiteral() override;
     std::string String() override;

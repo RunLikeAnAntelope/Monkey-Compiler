@@ -4,29 +4,30 @@
 #include "token.hpp"
 #include <cassert>
 #include <format>
-#include <iostream>
 #include <memory>
 #include <utility>
 #include <vector>
 namespace Evaluator {
-std::shared_ptr<Object::Boolean> FALSE =
+static std::shared_ptr<Object::Boolean> FALSE =
     std::make_unique<Object::Boolean>(false);
-std::shared_ptr<Object::Boolean> TRUE = std::make_shared<Object::Boolean>(true);
-std::shared_ptr<Object::Null> NULL_O = std::make_shared<Object::Null>();
+static std::shared_ptr<Object::Boolean> TRUE =
+    std::make_shared<Object::Boolean>(true);
+static std::shared_ptr<Object::Null> NULL_O = std::make_shared<Object::Null>();
 
-std::shared_ptr<Object::Boolean> nativeBoolToBoolObject(bool boolean) {
+static std::shared_ptr<Object::Boolean> nativeBoolToBoolObject(bool boolean) {
     return boolean ? TRUE : FALSE;
 }
 // Environment stuff
-Environment::EnvObj Environment::Get(std::string name) {
+Environment::EnvObj Environment::Get(const std::string &name) {
     if (this->m_environment.contains(name)) {
-        return {this->m_environment[name], true};
+        return {.obj = this->m_environment[name], .ok = true};
     } else {
-        return {nullptr, false};
+        return {.obj = nullptr, .ok = false};
     }
 }
-void Environment::Set(std::string name, std::shared_ptr<Object::IObject> obj) {
-    this->m_environment[name] = obj;
+void Environment::Set(const std::string &name,
+                      std::shared_ptr<Object::IObject> obj) {
+    this->m_environment[name] = std::move(obj);
 }
 
 // Environment stuff
@@ -57,7 +58,7 @@ std::shared_ptr<Object::IObject> Evaluator::Eval(Ast::INode *node) {
         if (isError(right.get())) {
             return right;
         }
-        return evalPrefixExpression(prefixExpr->m_op, std::move(right));
+        return evalPrefixExpression(prefixExpr->m_op, right);
     }
     case Ast::Type::INFIX_EXPRESSION: {
         auto *infixExpr = dynamic_cast<Ast::InfixExpression *>(node);
@@ -143,7 +144,7 @@ std::shared_ptr<Object::IObject> Evaluator::evalStatements(
 
 std::shared_ptr<Object::IObject>
 Evaluator::evalPrefixExpression(const std::string &op,
-                                std::shared_ptr<Object::IObject> right) {
+                                const std::shared_ptr<Object::IObject> &right) {
     if (op == "!") {
         return evalBangOperatorExpression(right.get());
     } else if (op == "-") {
