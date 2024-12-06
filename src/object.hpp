@@ -26,10 +26,13 @@ public:
     std::shared_ptr<Object::IObject> obj;
     bool ok;
   };
+  Environment() = default;
+  explicit Environment(std::shared_ptr<Environment> outerEnv);
   EnvObj Get(const std::string &name);
   void Set(const std::string &name, std::shared_ptr<Object::IObject>);
 
 private:
+  std::shared_ptr<Environment> m_outerEnv;
   std::unordered_map<std::string, std::shared_ptr<Object::IObject>>
     m_environment;
 };

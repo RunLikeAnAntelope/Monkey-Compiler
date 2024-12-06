@@ -8,7 +8,8 @@ namespace Evaluator {
 
 class Evaluator {
 public:
-  std::shared_ptr<Object::IObject> Eval(Ast::INode *node);
+  std::shared_ptr<Object::IObject> Eval(Ast::INode *node,
+                                        Object::Environment env);
   std::shared_ptr<Object::IObject> evalProgram(Ast::Program *program);
 
 private:
@@ -50,6 +51,13 @@ private:
   static std::shared_ptr<Object::Error> newError(const std::string &errorMsg);
 
   static bool isError(const Object::IObject *const obj);
+
+  std::vector<std::shared_ptr<Object::IObject>>
+  evalExpressions(const std::vector<std::unique_ptr<Ast::IExpression>> &exps);
+
+  std::shared_ptr<Object::IObject>
+  applyFunction(const std::shared_ptr<Object::IObject> &fn,
+                const std::vector<std::shared_ptr<Object::IObject>> &args);
 };
 
 } // namespace Evaluator

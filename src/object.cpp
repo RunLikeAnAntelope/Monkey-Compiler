@@ -24,9 +24,14 @@ std::string objectTypeToStr(ObjectType type) {
   }
 }
 
+Environment::Environment(std::shared_ptr<Environment> outerEnv)
+  : m_outerEnv(std::move(outerEnv)) {}
+
 Environment::EnvObj Environment::Get(const std::string &name) {
   if (this->m_environment.contains(name)) {
     return {.obj = this->m_environment[name], .ok = true};
+  } else if (this->m_outerEnv != nullptr) {
+    return this->m_outerEnv->Get(name);
   } else {
     return {.obj = nullptr, .ok = false};
   }

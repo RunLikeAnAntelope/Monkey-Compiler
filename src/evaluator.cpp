@@ -18,7 +18,8 @@ static std::shared_ptr<Object::Boolean> nativeBoolToBoolObject(bool boolean) {
 }
 
 // Environment stuff
-std::shared_ptr<Object::IObject> Evaluator::Eval(Ast::INode *node) {
+std::shared_ptr<Object::IObject> Evaluator::Eval(Ast::INode *node,
+                                                 Object::Environment env) {
   if (node == nullptr) {
     return nullptr;
   }
@@ -29,7 +30,7 @@ std::shared_ptr<Object::IObject> Evaluator::Eval(Ast::INode *node) {
   }
   case (Ast::Type::EXPRESSION_STATEMENT): {
     return Eval(
-      dynamic_cast<Ast::ExpressionStatement *>(node)->m_expression.get());
+      dynamic_cast<Ast::ExpressionStatement *>(node)->m_expression.get(), env);
   }
   case Ast::Type::INTEGER_LITERAL: {
     auto *integer = dynamic_cast<Ast::IntegerLiteral *>(node);
@@ -101,9 +102,47 @@ std::shared_ptr<Object::IObject> Evaluator::Eval(Ast::INode *node) {
                                               std::move(body));
   }
 
+  case Ast::Type::CALL_EXPRESSION: {
+    auto *callExpr = dynamic_cast<Ast::CallExpression *>(node);
+    auto function = Eval(callExpr->m_function.get());
+    if (isError(function.get())) {
+      return function;
+    }
+    auto args = evalExpressions(callExpr->m_arguments);
+    if (std::ssize(args) == 1 && isError(args[0].get())) {
+      return args[0];
+    }
+
+    return applyFunction(function, args);
+  }
+
   default:
     return nullptr;
   }
+}
+
+std::shared_ptr<Object::IObject> Evaluator::applyFunction(
+  const std::shared_ptr<Object::IObject> &fn,
+  const std::vector<std::shared_ptr<Object::IObject>> &args) {
+  if (fn->Type() != Object::ObjectType::FUNCTION_OBJ) {
+    return newError(
+      std::format("not a function: {}", Object::objectTypeToStr(fn->Type())));
+  }
+  auto function = dynamic_cast<Object::Function *>(fn.get());
+}
+
+std::vector<std::shared_ptr<Object::IObject>> Evaluator::evalExpressions(
+  const std::vector<std::unique_ptr<Ast::IExpression>> &exps) {
+  std::vector<std::shared_ptr<Object::IObject>> result;
+  for (const auto &e : exps) {
+    auto evaluated = Eval(e.get());
+    if (isError(evaluated.get())) {
+      result.push_back(evaluated);
+      return result;
+    }
+    result.push_back(evaluated);
+  }
+  return result;
 }
 
 std::shared_ptr<Object::IObject> Evaluator::evalProgram(Ast::Program *program) {
