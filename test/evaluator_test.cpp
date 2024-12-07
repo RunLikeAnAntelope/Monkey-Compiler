@@ -7,6 +7,7 @@
 
 #include <format>
 #include <gtest/gtest.h>
+#include <iostream>
 #include <memory>
 #include <variant>
 using Common::variant;
@@ -16,7 +17,14 @@ static std::shared_ptr<Object::IObject> testEval(const std::string &input) {
   Parser::Parser p(l);
   Ast::Program program = p.ParseProgram();
   Evaluator::Evaluator evaluator;
-  return evaluator.Eval(&program);
+  std::shared_ptr<Object::Environment> env =
+    std::make_unique<Object::Environment>();
+  auto output = evaluator.Eval(&program, env);
+  if (output->Type() == Object::ObjectType::ERROR_OBJ) {
+    auto err = dynamic_cast<Object::Error *>(output.get());
+    std::cout << err->m_message << std::endl;
+  }
+  return output;
 }
 
 static void testIntegerObject(Object::IObject *object,
@@ -274,4 +282,9 @@ TEST(Evaluator, FunctionObject) {
 
   ASSERT_EQ(fun->m_body->String(), expectedBody) << std::format(
     "body is not {}, got={}", expectedBody, fun->m_body->String());
+}
+TEST(Evaluator, TestClosures) {
+  std::string input = "let newAdder = fn(x) { fn(y) {x + y)};}; let addTwo = "
+                      "newAdder(2); addTwo(2);";
+  testIntegerObject(testEval(input).get(), 4);
 }

@@ -1,6 +1,7 @@
 #include "object.hpp"
 #include "helpers.hpp"
 #include <format>
+#include <iostream>
 #include <memory>
 #include <string>
 #include <utility>
@@ -21,6 +22,14 @@ std::string objectTypeToStr(ObjectType type) {
     return "ERROR";
   case Object::ObjectType::FUNCTION_OBJ:
     return "FUNCTION";
+  }
+}
+
+void Environment::PrintEnv() {
+  std::cout << "ENVIRONMENT ################################################\n";
+  for (const auto &pair : this->m_environment) {
+    std::cout << std::format("key: {}, type: {}", pair.first,
+                             Object::objectTypeToStr(pair.second->Type()));
   }
 }
 

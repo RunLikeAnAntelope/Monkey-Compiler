@@ -31,6 +31,8 @@ public:
   EnvObj Get(const std::string &name);
   void Set(const std::string &name, std::shared_ptr<Object::IObject>);
 
+  void PrintEnv();
+
 private:
   std::shared_ptr<Environment> m_outerEnv;
   std::unordered_map<std::string, std::shared_ptr<Object::IObject>>
