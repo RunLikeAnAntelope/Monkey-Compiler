@@ -98,7 +98,6 @@ Evaluator::Eval(Ast::INode *node,
     auto *fun = dynamic_cast<Ast::FunctionLiteral *>(node);
     auto params = std::move(fun->m_parameters);
     auto body = std::move(fun->m_body);
-    auto env = std::make_unique<Object::Environment>();
     return std::make_shared<Object::Function>(std::move(params), std::move(env),
                                               std::move(body));
   }

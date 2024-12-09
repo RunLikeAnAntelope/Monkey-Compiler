@@ -284,7 +284,7 @@ TEST(Evaluator, FunctionObject) {
     "body is not {}, got={}", expectedBody, fun->m_body->String());
 }
 TEST(Evaluator, TestClosures) {
-  std::string input = "let newAdder = fn(x) { fn(y) {x + y)};}; let addTwo = "
+  std::string input = "let newAdder = fn(x) { fn(y) {x + y};}; let addTwo = "
                       "newAdder(2); addTwo(2);";
   testIntegerObject(testEval(input).get(), 4);
 }
