@@ -4,7 +4,7 @@
 namespace Repl {
 
 const std::string PROMPT = ">>";
-static void printParserErrors(const std::vector<std::string> &errors);
+void printParserErrors(const std::vector<std::string> &errors);
 void Start();
 
 } // namespace Repl
