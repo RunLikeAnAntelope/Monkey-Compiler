@@ -85,6 +85,7 @@ TEST(TestNextToken, Works) {
     Test{.expectedToken = Token::SEMICOLON, .expectedLiteral = ";"},
     Test{.expectedToken = Token::STRING, .expectedLiteral = "foobar"},
     Test{.expectedToken = Token::STRING, .expectedLiteral = "foo bar"},
+    Test{.expectedToken = Token::STRING, .expectedLiteral = "foo\"bar"},
 
     Test{.expectedToken = Token::EOF_, .expectedLiteral = ""}};
 
@@ -104,7 +105,9 @@ TEST(TestNextToken, Works) {
                       "10 == 10;\n"
                       "10 != 9;\n"
                       "\"foobar\"\n"
-                      "\"foo bar\"\n";
+                      "\"foo bar\"\n"
+                      "\"foo\\\"bar\"";
+
   Lexer::Lexer l(input);
   Token::Token tok{};
   for (unsigned int i = 1; const auto &test : tests) {

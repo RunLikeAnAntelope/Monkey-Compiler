@@ -130,13 +130,25 @@ std::string Lexer::readNumber() {
 }
 
 std::string Lexer::readString() {
-  size_t position = m_position + 1;
-
-  do {
+  std::string out;
+  readChar(); // get rid of first "
+  while (m_ch != '"' && m_ch != 0) {
+    if (m_ch == '\\') {
+      char peek = peekChar();
+      switch (peek) {
+      case '"':
+        out.append("\"");
+        readChar();
+        break;
+      default:
+        out.push_back(m_ch);
+      }
+    } else {
+      out.push_back(m_ch);
+    }
     readChar();
-  } while (m_ch != '"' && m_ch != 0);
-
-  return m_input.substr(position, m_position - position);
+  }
+  return out;
 }
 
 void Lexer::readChar() {
