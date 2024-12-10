@@ -7,43 +7,44 @@ namespace Token {
 // typedef std::string TokenType;
 
 enum TokenType {
-    ILLEGAL,
-    EOF_,
-    IDENT,
-    INT,
-    ASSIGN,
-    PLUS,
-    MINUS,
-    BANG,
-    ASTERISK,
-    SLASH,
-    LT,
-    GT,
-    EQ,
-    NOT_EQ,
-    COMMA,
-    SEMICOLON,
-    LPAREN,
-    RPAREN,
-    LBRACE,
-    RBRACE,
-    FUNCTION,
-    LET,
-    TRUE,
-    FALSE,
-    IF,
-    ELSE,
-    RETURN
+  ILLEGAL,
+  EOF_,
+  IDENT,
+  INT,
+  ASSIGN,
+  PLUS,
+  MINUS,
+  BANG,
+  ASTERISK,
+  SLASH,
+  LT,
+  GT,
+  EQ,
+  NOT_EQ,
+  COMMA,
+  SEMICOLON,
+  LPAREN,
+  RPAREN,
+  LBRACE,
+  RBRACE,
+  FUNCTION,
+  LET,
+  TRUE,
+  FALSE,
+  IF,
+  ELSE,
+  RETURN,
+  STRING
 };
 
 struct Token {
-    TokenType Type;
-    std::string Literal;
+  TokenType Type;
+  std::string Literal;
 };
 
 struct StringTok {
-    std::string Str;
-    TokenType Type;
+  std::string Str;
+  TokenType Type;
 };
 
 const std::vector<StringTok> strToTok = {{.Str = "ILLEGAL", .Type = ILLEGAL},
@@ -80,16 +81,15 @@ const std::vector<StringTok> strToTok = {{.Str = "ILLEGAL", .Type = ILLEGAL},
                                          {.Str = "FALSE", .Type = FALSE},
                                          {.Str = "IF", .Type = IF},
                                          {.Str = "ELSE", .Type = ELSE},
-                                         {.Str = "RETURN", .Type = RETURN}
-
-};
+                                         {.Str = "RETURN", .Type = RETURN},
+                                         {.Str = "STRING", .Type = STRING}};
 
 std::unordered_map<std::string, TokenType> vecToTokenMap();
 std::unordered_map<TokenType, std::string> vecToTokenStringMap();
 
 const std::unordered_map<std::string, TokenType> tokenMap = vecToTokenMap();
 const std::unordered_map<TokenType, std::string> tokenStringMap =
-    vecToTokenStringMap();
+  vecToTokenStringMap();
 //     {"ILLEGAL", ILLEGAL},
 //     {"EOF", EOF_},
 //
@@ -165,8 +165,8 @@ const TokenType ELSE = "ELSE";
 const TokenType RETURN = "RETURN";
 */
 const std::unordered_map<std::string, TokenType> keywords = {
-    {"fn", FUNCTION}, {"let", LET},   {"true", TRUE},    {"false", FALSE},
-    {"if", IF},       {"else", ELSE}, {"return", RETURN}};
+  {"fn", FUNCTION}, {"let", LET},   {"true", TRUE},    {"false", FALSE},
+  {"if", IF},       {"else", ELSE}, {"return", RETURN}};
 
 TokenType LookupIdent(const std::string &ident);
 
