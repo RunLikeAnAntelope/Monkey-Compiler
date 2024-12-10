@@ -95,32 +95,30 @@ TEST(TestNextToken, Works) {
                       "};\n"
                       "let result = add(five, ten);\n"
                       "!-/*5\n;"
-                      "5 < 10 > 5;"
-                      "if (5 < 10) {"
-                      "    return true;"
-                      "} else {"
-                      "   return false;"
-                      "}"
-                      "10 == 10;"
-                      "10 != 9;"
-                      "foobar"
-                      "foo bar";
-
+                      "5 < 10 > 5;\n"
+                      "if (5 < 10) {\n"
+                      "    return true;\n"
+                      "} else {\n"
+                      "   return false;\n"
+                      "}\n"
+                      "10 == 10;\n"
+                      "10 != 9;\n"
+                      "\"foobar\"\n"
+                      "\"foo bar\"\n";
   Lexer::Lexer l(input);
-
   Token::Token tok{};
   for (unsigned int i = 1; const auto &test : tests) {
     tok = l.NextToken();
+    ASSERT_EQ(tok.Literal, test.expectedLiteral)
+      << "tests[" << i << "] - "
+      << "literal wrong: expected=" << test.expectedLiteral
+      << ", got=" << tok.Literal;
     ASSERT_EQ(tok.Type, test.expectedToken)
       << "tests[" << i << "] - "
       << "tokentype wrong: expected="
       << Token::tokenStringMap.at(test.expectedToken)
       << ", got=" << Token::tokenStringMap.at(tok.Type);
 
-    ASSERT_EQ(tok.Literal, test.expectedLiteral)
-      << "tests[" << i << "] - "
-      << "literal wrong: expected=" << test.expectedLiteral
-      << ", got=" << tok.Literal;
     i++;
   }
 }

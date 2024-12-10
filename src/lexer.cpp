@@ -1,6 +1,7 @@
 #include "lexer.hpp"
 #include "token.hpp"
 #include <cctype>
+#include <iostream>
 #include <string>
 #include <utility>
 
@@ -89,6 +90,10 @@ Token::Token Lexer::NextToken() {
     tok.Type = Token::RBRACE;
     tok.Literal = m_ch;
     break;
+  case '"':
+    tok.Type = Token::STRING;
+    tok.Literal = readString();
+    break;
   default:
     if (isLetter(m_ch)) {
       tok.Literal = readIdentifier();
@@ -121,6 +126,16 @@ std::string Lexer::readNumber() {
   while (std::isdigit(m_ch)) {
     readChar();
   }
+  return m_input.substr(position, m_position - position);
+}
+
+std::string Lexer::readString() {
+  size_t position = m_position + 1;
+
+  do {
+    readChar();
+  } while (m_ch != '"' && m_ch != 0);
+
   return m_input.substr(position, m_position - position);
 }
 

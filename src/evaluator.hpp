@@ -64,7 +64,7 @@ private:
   extendFunctionEnv(Object::Function *fn,
                     const std::vector<std::shared_ptr<Object::IObject>> &args);
   static std::shared_ptr<Object::IObject>
-  UnwrapReturnValue(std::shared_ptr<Object::IObject> obj);
+  unwrapReturnValue(std::shared_ptr<Object::IObject> obj);
 };
 
 } // namespace Evaluator

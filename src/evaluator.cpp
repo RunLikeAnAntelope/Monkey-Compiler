@@ -131,11 +131,11 @@ std::shared_ptr<Object::IObject> Evaluator::applyFunction(
   auto *function = dynamic_cast<Object::Function *>(fn.get());
   auto extendedEnv = extendFunctionEnv(function, args);
   auto evaluated = Eval(function->m_body.get(), extendedEnv);
-  return UnwrapReturnValue(evaluated);
+  return unwrapReturnValue(evaluated);
 }
 
 std::shared_ptr<Object::IObject>
-Evaluator::UnwrapReturnValue(std::shared_ptr<Object::IObject> obj) {
+Evaluator::unwrapReturnValue(std::shared_ptr<Object::IObject> obj) {
   if (obj->Type() == Object::ObjectType::RETURN_VALUE_OBJ) {
     return dynamic_cast<Object::ReturnValue *>(obj.get())->m_value;
   }
