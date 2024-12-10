@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.22)
 project(Lexer CXX)
 
+set(CMAKE_C_COMPILER clang)
+set(CMAKE_CXX_COMPILER clang++)
 # Put output in seperate directory
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 # Set C++ version
@@ -12,12 +14,13 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 # compile flags
 set (CMAKE_CXX_FLAGS "-ferror-limit=0 -Wall -Wextra -Wextra -Wconversion -Wsign-conversion -pedantic-errors -g -std=c++20")
-include(FetchContent)
-FetchContent_Declare(
-  googletest
-  URL https://github.com/google/googletest/archive/03597a01ee50ed33e9dfd640b249b4be3799d395.zip
-)
-FetchContent_MakeAvailable(googletest)
+# inlude threading for gtest
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+find_package(Threads REQUIRED)
+# Locate GTest
+find_package(GTest REQUIRED)
+include_directories(${GTEST_INCLUDE_DIRS} src test)
 
 # set sources
 set(SOURCES 
@@ -50,9 +53,7 @@ set(TESTS
 
 # Link runTests with what we want to test and the GTest and pthread library
 add_executable(Test ${SOURCES} ${TESTS} test/all_tests.cpp)
-target_link_libraries(Test GTest::gtest_main)
-include(GoogleTest)
-gtest_discover_tests(Test)
+target_link_libraries(Test ${GTEST_LIBRARIES} Threads::Threads)
 
 # Make repl/main
 add_executable(Repl ${SOURCES} src/main.cpp)
