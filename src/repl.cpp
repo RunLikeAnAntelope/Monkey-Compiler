@@ -32,8 +32,7 @@ void Start() {
   }
 }
 
-static void
-printParserErrors(const std::vector<std::string> &errors) // namespace Repl
+void printParserErrors(const std::vector<std::string> &errors) // namespace Repl
 {
   std::cout << "Woops! We ran into some monkey business here!\n"
             << " parser errors:\n";
