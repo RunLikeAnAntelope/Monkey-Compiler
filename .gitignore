@@ -60,3 +60,4 @@ build/
 bin/
 CMakeFiles/
 .cache/
+compile_commands.json
