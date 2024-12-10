@@ -22,7 +22,7 @@ static std::shared_ptr<Object::IObject> testEval(const std::string &input) {
   auto output = evaluator.Eval(&program, env);
   if (output->Type() == Object::ObjectType::ERROR_OBJ) {
     auto err = dynamic_cast<Object::Error *>(output.get());
-    std::cout << err->m_message << std::endl;
+    std::cout << err->m_message << "\n";
   }
   return output;
 }
@@ -283,7 +283,40 @@ TEST(Evaluator, FunctionObject) {
   ASSERT_EQ(fun->m_body->String(), expectedBody) << std::format(
     "body is not {}, got={}", expectedBody, fun->m_body->String());
 }
-TEST(Evaluator, TestClosures) {
+
+TEST(Evaluator, FunctionApplication) {
+  struct test {
+    std::string input;
+    const long int expected;
+  };
+
+  std::vector<test> tests = {
+    {.input = "let identity = fn(x) { x; }; identity(5);", .expected = 5},
+    {.input = "let identity = fn(x) { return x; }; identity(5);",
+     .expected = 5},
+    {.input = "let double = fn(x) { x * 2; }; double(5);", .expected = 10},
+    {.input = "let add = fn(x, y) { x + y; }; add(5, 5);", .expected = 10},
+    {.input = "let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));",
+     .expected = 20},
+    {.input = "fn(x) { x; }(5)", .expected = 5},
+  };
+  for (const auto &tst : tests) {
+    testIntegerObject(testEval(tst.input).get(), tst.expected);
+  }
+}
+TEST(Evaluator, EnclosingEnvironment) {
+  std::string input = "let first = 10;"
+                      "let second = 10;"
+                      "let third = 10;"
+                      "let ourFunction = fn(first) {"
+                      "let second = 20;"
+                      "first + second + third;"
+                      "};"
+                      "ourFunction(20) + first + second;";
+  testIntegerObject(testEval(input).get(), 70);
+}
+
+TEST(Evaluator, Closures) {
   std::string input = "let newAdder = fn(x) { fn(y) {x + y};}; let addTwo = "
                       "newAdder(2); addTwo(2);";
   testIntegerObject(testEval(input).get(), 4);
