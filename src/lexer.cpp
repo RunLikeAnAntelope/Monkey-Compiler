@@ -140,6 +140,14 @@ std::string Lexer::readString() {
         out.append("\"");
         readChar();
         break;
+      case 'n':
+        out.append("\n");
+        readChar();
+        break;
+      case 't':
+        out.append("\t");
+        readChar();
+        break;
       default:
         out.push_back(m_ch);
       }
