@@ -11,7 +11,9 @@ enum class ObjectType : std::uint8_t {
   NULL_OBJ,
   RETURN_VALUE_OBJ,
   ERROR_OBJ,
-  FUNCTION_OBJ
+  FUNCTION_OBJ,
+  STRING_OBJ,
+  BUILTIN_OBJ
 };
 std::string objectTypeToStr(ObjectType type);
 struct IObject {
@@ -81,4 +83,19 @@ struct Function : public IObject {
   [[nodiscard]] ObjectType Type() const override;
   [[nodiscard]] std::string Inspect() const override;
 };
+
+struct String : public IObject {
+  std::string m_value;
+  explicit String(std::string value);
+  [[nodiscard]] ObjectType Type() const override;
+  [[nodiscard]] std::string Inspect() const override;
+};
+
+using BuiltinFunction = void (*)(Object::IObject...);
+struct Builtin : IObject {
+  BuiltinFunction fn;
+  [[nodiscard]] ObjectType Type() const override;
+  [[nodiscard]] std::string Inspect() const override;
+};
+
 } // namespace Object

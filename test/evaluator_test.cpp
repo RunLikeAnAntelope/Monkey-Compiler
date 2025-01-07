@@ -20,9 +20,11 @@ static std::shared_ptr<Object::IObject> testEval(const std::string &input) {
   std::shared_ptr<Object::Environment> env =
     std::make_unique<Object::Environment>();
   auto output = evaluator.Eval(&program, env);
-  if (output->Type() == Object::ObjectType::ERROR_OBJ) {
-    auto err = dynamic_cast<Object::Error *>(output.get());
-    std::cout << err->m_message << "\n";
+  if (output != nullptr) {
+    if (output->Type() == Object::ObjectType::ERROR_OBJ) {
+      auto err = dynamic_cast<Object::Error *>(output.get());
+      std::cout << err->m_message << "\n";
+    }
   }
   return output;
 }
@@ -232,6 +234,8 @@ TEST(Evaluator, ErrorHandling) {
       .input = "foobar",
       .expectedMessage = "identifier not found: foobar",
     },
+    {.input = "\"Hello\" - \"world\"",
+     .expectedMessage = "unknown operator: STRING - STRING"},
   };
   for (const auto &tst : tests) {
     auto evaluated = testEval(tst.input);
@@ -320,4 +324,63 @@ TEST(Evaluator, Closures) {
   std::string input = "let newAdder = fn(x) { fn(y) {x + y};}; let addTwo = "
                       "newAdder(2); addTwo(2);";
   testIntegerObject(testEval(input).get(), 4);
+}
+
+TEST(Evaluator, String) {
+  std::string input = "\"Hello World\"";
+  auto evaluated = testEval(input);
+  auto *str = dynamic_cast<Object::String *>(evaluated.get());
+  ASSERT_NE(nullptr, str) << std::format(
+    "object is not a string, got={}",
+    Object::objectTypeToStr(evaluated.get()->Type()));
+}
+
+TEST(Evaluator, StringConcatenation) {
+  std::string input = "\"Hello\" + \" \" + \"World!\"";
+  auto evaluated = testEval(input);
+  auto *str = dynamic_cast<Object::String *>(evaluated.get());
+  ASSERT_NE(nullptr, str) << std::format(
+    "object is not a string, got={}",
+    Object::objectTypeToStr(evaluated.get()->Type()));
+  ;
+  ASSERT_EQ(str->m_value, "Hello World!") << std::format(
+    "String has wrong value. Exprected \"Hello World!\". got={}", str->m_value);
+}
+
+TEST(Evaluator, BuiltInLen) {
+  struct test {
+    const std::string input;
+    const variant expected;
+  };
+  std::vector<test> tests = {
+    {.input = "len(\"\")", .expected = 0},
+    {.input = "len(\"four\")", .expected = 4},
+    {.input = "len(\"hello world\")", .expected = 11},
+    {.input = "len(1)",
+     .expected = "argument to `len` not supported, got INTEGER"},
+    {.input = "len(\"one\",\"two\")",
+     .expected = "wrong number of arguments. got=2, want=1"},
+  };
+  for (const auto &tst : tests) {
+    auto *evaluated = testEval(tst.input).get();
+    switch (evaluated->Type()) {
+    case Object::ObjectType::INTEGER_OBJ: {
+      testIntegerObject(evaluated, std::get<long int>(tst.expected));
+    }
+    case Object::ObjectType::ERROR_OBJ: {
+      auto errorObj = dynamic_cast<Object::Error *>(evaluated);
+      ASSERT_NE(nullptr, errorObj)
+        << std::format("object is not Error. got={}",
+                       Object::objectTypeToStr(evaluated->Type()));
+      ASSERT_EQ(errorObj->m_message, std::get<std::string>(tst.expected))
+        << std::format("wrong error message. expected={}, got ={}",
+                       std::get<std::string>(tst.expected),
+                       errorObj->m_message);
+    }
+    default:
+      FAIL() << "Build in length returned an object type that is not a integer "
+                "or an object. got="
+             << Object::objectTypeToStr(evaluated->Type());
+    }
+  }
 }
