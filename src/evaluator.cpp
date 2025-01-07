@@ -98,9 +98,10 @@ Evaluator::Eval(Ast::INode *node,
     auto *fun = dynamic_cast<Ast::FunctionLiteral *>(node);
     auto params = std::move(fun->m_parameters);
     auto body = std::move(fun->m_body);
-    return std::make_shared<Object::Function>(std::move(params), env,
+    return std::make_shared<Object::Function>(std::move(params), std::move(env),
                                               std::move(body));
   }
+
   case Ast::Type::CALL_EXPRESSION: {
     auto *callExpr = dynamic_cast<Ast::CallExpression *>(node);
     auto function = Eval(callExpr->m_function.get(), env);
@@ -113,10 +114,6 @@ Evaluator::Eval(Ast::INode *node,
     }
 
     return applyFunction(function, args);
-  }
-  case Ast::Type::STRING_LITERAL: {
-    auto *strLit = dynamic_cast<Ast::StringLiteral *>(node);
-    return std::make_shared<Object::String>(strLit->m_value);
   }
 
   default:
@@ -261,11 +258,6 @@ Evaluator::evalInfixExpression(const std::string &op, Object::IObject *left,
     return evalBooleanInfixExpression(op, left, right);
   }
 
-  if (left->Type() == Object::ObjectType::STRING_OBJ &&
-      right->Type() == Object::ObjectType::STRING_OBJ) {
-    return evalStringInfixExpression(op, left, right);
-  }
-
   if (left->Type() != right->Type()) {
     return newError(std::format("type mismatch: {} {} {}",
                                 Object::objectTypeToStr(left->Type()), op,
@@ -302,29 +294,6 @@ std::shared_ptr<Object::IObject> Evaluator::evalBooleanInfixExpression(
   }
 }
 
-std::shared_ptr<Object::IObject> Evaluator::evalStringInfixExpression(
-  const std::string &op, Object::IObject *left, Object::IObject *right) {
-  auto leftVal = dynamic_cast<Object::String *>(left);
-  auto rightVal = dynamic_cast<Object::String *>(right);
-  auto opIter = Token::tokenMap.find(op);
-  if (opIter != Token::tokenMap.end()) {
-    switch (opIter->second) {
-    case Token::PLUS:
-      return std::make_shared<Object::String>(leftVal->m_value +
-                                              rightVal->m_value);
-    case Token::EQ:
-      return nativeBoolToBoolObject(leftVal->m_value == rightVal->m_value);
-    case Token::NOT_EQ:
-      return nativeBoolToBoolObject(leftVal->m_value != rightVal->m_value);
-    default:
-      break;
-    }
-  }
-  return newError(std::format("unknown operator: {} {} {}",
-                              Object::objectTypeToStr(leftVal->Type()), op,
-                              Object::objectTypeToStr(rightVal->Type())));
-}
-
 std::shared_ptr<Object::IObject> Evaluator::evalIntegerInfixExpression(
   const std::string &op, Object::IObject *left, Object::IObject *right) {
   auto leftVal = dynamic_cast<Object::Integer *>(left)->m_value;
@@ -350,12 +319,12 @@ std::shared_ptr<Object::IObject> Evaluator::evalIntegerInfixExpression(
     case Token::NOT_EQ:
       return nativeBoolToBoolObject(leftVal != rightVal);
     default:
-      break;
+      return newError(std::format("unknown operator: {} {} {}",
+                                  Object::objectTypeToStr(left->Type()), op,
+                                  Object::objectTypeToStr(right->Type())));
     }
   }
-  return newError(std::format("unknown operator: {} {} {}",
-                              Object::objectTypeToStr(left->Type()), op,
-                              Object::objectTypeToStr(right->Type())));
+  return NULL_O;
 }
 
 bool Evaluator::isTruthy(const Object::IObject *const obj) {

@@ -3,6 +3,6 @@
 #include <variant>
 namespace Common {
 
-using variant = std::variant<long int, std::string, bool, std::monostate>;
+typedef std::variant<long int, std::string, bool, std::monostate> variant;
 
 } // namespace Common

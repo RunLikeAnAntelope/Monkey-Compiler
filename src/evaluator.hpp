@@ -42,10 +42,6 @@ private:
   evalBooleanInfixExpression(const std::string &op, Object::IObject *left,
                              Object::IObject *right);
 
-  static std::shared_ptr<Object::IObject>
-  evalStringInfixExpression(const std::string &op, Object::IObject *left,
-                            Object::IObject *right);
-
   static bool isTruthy(const Object::IObject *const obj);
 
   std::shared_ptr<Object::IObject>
