@@ -22,6 +22,11 @@ std::string objectTypeToStr(ObjectType type) {
     return "ERROR";
   case Object::ObjectType::FUNCTION_OBJ:
     return "FUNCTION";
+  case Object::ObjectType::STRING_OBJ:
+    return "STRING";
+
+  case Object::ObjectType::BUILTIN_OBJ:
+    return "BUILTIN";
   }
 }
 
@@ -101,4 +106,13 @@ std::string Function::Inspect() const {
   out.append("\n}");
   return out;
 }
+
+// String Object
+String::String(std::string value) : m_value(std::move(value)) {}
+ObjectType String::Type() const { return ObjectType::STRING_OBJ; }
+std::string String::Inspect() const { return m_value; }
+
+// BuiltinFunction object
+ObjectType Builtin::Type() const { return ObjectType::BOOLEAN_OBJ; }
+std::string Builtin::Inspect() const { return "builtin function"; }
 } // namespace Object
