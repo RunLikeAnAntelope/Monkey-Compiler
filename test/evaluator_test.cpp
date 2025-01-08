@@ -18,7 +18,7 @@ static std::shared_ptr<Object::IObject> testEval(const std::string &input) {
   Ast::Program program = p.ParseProgram();
   Evaluator::Evaluator evaluator;
   std::shared_ptr<Object::Environment> env =
-    std::make_shared<Object::Environment>();
+    std::make_unique<Object::Environment>();
   auto output = evaluator.Eval(&program, env);
   if (output != nullptr) {
     if (output->Type() == Object::ObjectType::ERROR_OBJ) {
@@ -357,43 +357,30 @@ TEST(Evaluator, BuiltInLen) {
     {.input = "len(\"four\")", .expected = 4},
     {.input = "len(\"hello world\")", .expected = 11},
     {.input = "len(1)",
-     .expected = "argument to 'len' not supported, got INTEGER"},
+     .expected = "argument to `len` not supported, got INTEGER"},
     {.input = "len(\"one\",\"two\")",
-     .expected = "wrong number of arguments. got=2. want=1"},
+     .expected = "wrong number of arguments. got=2, want=1"},
   };
-  // int counter = 0;
-  // for (const auto &tst : tests) {
-  //   std::cout << "whoops" << counter << "\n";
-  //   counter++;
-  //   auto *evaluated = testEval(tst.input).get();
-  //   switch (evaluated->Type()) {
-  //   case Object::ObjectType::INTEGER_OBJ: {
-  //     testIntegerObject(evaluated, std::get<long int>(tst.expected));
-  //     break;
-  //   }
-  //   case Object::ObjectType::ERROR_OBJ: {
-  //     auto errorObj = dynamic_cast<Object::Error *>(evaluated);
-  //     if (counter == 4) {
-  //       std::cout << std::get<std::string>(tst.expected) << std::endl;
-  //       std::cout << errorObj->m_message << std::endl;
-  //     }
-  //     ASSERT_NE(nullptr, errorObj)
-  //       << std::format("object is not Error. got={}",
-  //                      Object::objectTypeToStr(evaluated->Type()));
-  //
-  //     ASSERT_TRUE(std::holds_alternative<std::string>(tst.expected))
-  //       << "tst.expected does not hold a std::string";
-  //     // ASSERT_EQ(errorObj->m_message, std::get<std::string>(tst.expected))
-  //     //   << std::format("wrong error message. expected={}, got ={}",
-  //     //                  std::get<std::string>(tst.expected),
-  //     //                  errorObj->m_message);
-  //     break;
-  //   }
-  //   default:
-  //     FAIL() << "Build in length returned an object type that is not a
-  //     integer "
-  //               "or an object. got="
-  //            << Object::objectTypeToStr(evaluated->Type());
-  //   }
-  // }
+  for (const auto &tst : tests) {
+    auto *evaluated = testEval(tst.input).get();
+    switch (evaluated->Type()) {
+    case Object::ObjectType::INTEGER_OBJ: {
+      testIntegerObject(evaluated, std::get<long int>(tst.expected));
+    }
+    case Object::ObjectType::ERROR_OBJ: {
+      auto errorObj = dynamic_cast<Object::Error *>(evaluated);
+      ASSERT_NE(nullptr, errorObj)
+        << std::format("object is not Error. got={}",
+                       Object::objectTypeToStr(evaluated->Type()));
+      ASSERT_EQ(errorObj->m_message, std::get<std::string>(tst.expected))
+        << std::format("wrong error message. expected={}, got ={}",
+                       std::get<std::string>(tst.expected),
+                       errorObj->m_message);
+    }
+    default:
+      FAIL() << "Build in length returned an object type that is not a integer "
+                "or an object. got="
+             << Object::objectTypeToStr(evaluated->Type());
+    }
+  }
 }

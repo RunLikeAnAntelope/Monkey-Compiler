@@ -14,9 +14,6 @@ public:
   evalProgram(Ast::Program *program,
               const std::shared_ptr<Object::Environment> &env);
 
-  // public so it can be used elsewhere
-  static std::shared_ptr<Object::Error> newError(const std::string &errorMsg);
-
 private:
   // methods
   std::shared_ptr<Object::IObject>
@@ -55,6 +52,8 @@ private:
   evalIfExpression(const Ast::IfExpression *const ifExpr,
                    const std::shared_ptr<Object::Environment> &env);
 
+  static std::shared_ptr<Object::Error> newError(const std::string &errorMsg);
+
   static bool isError(const Object::IObject *const obj);
 
   std::vector<std::shared_ptr<Object::IObject>>
@@ -68,13 +67,8 @@ private:
   static std::shared_ptr<Object::Environment>
   extendFunctionEnv(Object::Function *fn,
                     const std::vector<std::shared_ptr<Object::IObject>> &args);
-
   static std::shared_ptr<Object::IObject>
   unwrapReturnValue(std::shared_ptr<Object::IObject> obj);
-
-  static std::shared_ptr<Object::IObject>
-  evalIdentifier(Ast::INode *node,
-                 const std::shared_ptr<Object::Environment> &env);
 };
 
 } // namespace Evaluator

@@ -1,6 +1,5 @@
 #include "evaluator.hpp"
 #include "ast.hpp"
-#include "builtins.hpp"
 #include "object.hpp"
 #include "token.hpp"
 #include <cassert>
@@ -9,7 +8,7 @@
 #include <vector>
 namespace Evaluator {
 static std::shared_ptr<Object::Boolean> FALSE =
-  std::make_shared<Object::Boolean>(false);
+  std::make_unique<Object::Boolean>(false);
 static std::shared_ptr<Object::Boolean> TRUE =
   std::make_shared<Object::Boolean>(true);
 static std::shared_ptr<Object::Null> NULL_O = std::make_shared<Object::Null>();
@@ -88,7 +87,12 @@ Evaluator::Eval(Ast::INode *node,
     return nullptr;
   }
   case Ast::Type::IDENTIFIER: {
-    return evalIdentifier(node, env);
+    auto *ident = dynamic_cast<Ast::Identifier *>(node);
+    auto lookup = env->Get(ident->m_value);
+    if (!lookup.ok) {
+      return newError(std::format("identifier not found: {}", ident->m_value));
+    }
+    return lookup.obj;
   }
   case Ast::Type::FUNCTION_LITERAL: {
     auto *fun = dynamic_cast<Ast::FunctionLiteral *>(node);
@@ -123,22 +127,14 @@ Evaluator::Eval(Ast::INode *node,
 std::shared_ptr<Object::IObject> Evaluator::applyFunction(
   const std::shared_ptr<Object::IObject> &fn,
   const std::vector<std::shared_ptr<Object::IObject>> &args) {
-  switch (fn->Type()) {
-  case Object::ObjectType::FUNCTION_OBJ: {
-    auto *function = dynamic_cast<Object::Function *>(fn.get());
-    auto extendedEnv = extendFunctionEnv(function, args);
-    auto evaluated = Eval(function->m_body.get(), extendedEnv);
-    return unwrapReturnValue(evaluated);
-  }
-  case Object::ObjectType::BUILTIN_OBJ: {
-    auto *function = dynamic_cast<Object::Builtin *>(fn.get());
-    return function->m_fn(args);
-  }
-  default: {
+  if (fn->Type() != Object::ObjectType::FUNCTION_OBJ) {
     return newError(
       std::format("not a function: {}", Object::objectTypeToStr(fn->Type())));
   }
-  }
+  auto *function = dynamic_cast<Object::Function *>(fn.get());
+  auto extendedEnv = extendFunctionEnv(function, args);
+  auto evaluated = Eval(function->m_body.get(), extendedEnv);
+  return unwrapReturnValue(evaluated);
 }
 
 std::shared_ptr<Object::IObject>
@@ -401,21 +397,6 @@ bool Evaluator::isError(const Object::IObject *const obj) {
     return obj->Type() == Object::ObjectType::ERROR_OBJ;
   }
   return false;
-}
-
-std::shared_ptr<Object::IObject>
-Evaluator::evalIdentifier(Ast::INode *node,
-                          const std::shared_ptr<Object::Environment> &env) {
-
-  auto *ident = dynamic_cast<Ast::Identifier *>(node);
-  auto lookup = env->Get(ident->m_value);
-  if (lookup.ok) {
-    return lookup.obj;
-  }
-  if (Builtins::builtins.contains(ident->m_value)) {
-    return Builtins::builtins[ident->m_value];
-  }
-  return newError(std::format("identifier not found: {}", ident->m_value));
 }
 
 } // namespace Evaluator

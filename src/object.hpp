@@ -1,7 +1,6 @@
 #pragma once
 #include "ast.hpp"
 #include <cstdint>
-#include <functional>
 #include <memory>
 #include <string>
 namespace Object {
@@ -30,14 +29,14 @@ public:
     bool ok;
   };
   Environment() = default;
-  explicit Environment(const std::shared_ptr<Environment> &outerEnv);
+  explicit Environment(std::shared_ptr<Environment> outerEnv);
   EnvObj Get(const std::string &name);
   void Set(const std::string &name, std::shared_ptr<Object::IObject>);
 
   void PrintEnv();
 
 private:
-  std::weak_ptr<Environment> m_outerEnv;
+  std::shared_ptr<Environment> m_outerEnv;
   std::unordered_map<std::string, std::shared_ptr<Object::IObject>>
     m_environment;
 };
@@ -92,11 +91,9 @@ struct String : public IObject {
   [[nodiscard]] std::string Inspect() const override;
 };
 
-using BuiltinFunction = std::function<std::shared_ptr<IObject>(
-  const std::vector<std::shared_ptr<IObject>> &args)>;
+using BuiltinFunction = void (*)(Object::IObject...);
 struct Builtin : IObject {
-  BuiltinFunction m_fn;
-  explicit Builtin(BuiltinFunction fn);
+  BuiltinFunction fn;
   [[nodiscard]] ObjectType Type() const override;
   [[nodiscard]] std::string Inspect() const override;
 };
