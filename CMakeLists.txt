@@ -41,6 +41,8 @@ set(SOURCES
     "src/evaluator.hpp"
     "src/evaluator.cpp"
     "src/common.hpp"
+    "src/builtins.hpp"
+    "src/builtins.cpp"
 )
 
 set(TESTS

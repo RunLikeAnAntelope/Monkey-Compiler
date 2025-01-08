@@ -24,7 +24,6 @@ std::string objectTypeToStr(ObjectType type) {
     return "FUNCTION";
   case Object::ObjectType::STRING_OBJ:
     return "STRING";
-
   case Object::ObjectType::BUILTIN_OBJ:
     return "BUILTIN";
   }
@@ -38,18 +37,20 @@ void Environment::PrintEnv() {
   }
 }
 
-Environment::Environment(std::shared_ptr<Environment> outerEnv)
-  : m_outerEnv(std::move(outerEnv)) {}
+Environment::Environment(const std::shared_ptr<Environment> &outerEnv)
+  : m_outerEnv(std::weak_ptr<Environment>(outerEnv)) {}
 
 Environment::EnvObj Environment::Get(const std::string &name) {
+  std::shared_ptr<Environment> outerEnv = m_outerEnv.lock();
   if (this->m_environment.contains(name)) {
     return {.obj = this->m_environment[name], .ok = true};
-  } else if (this->m_outerEnv != nullptr) {
-    return this->m_outerEnv->Get(name);
+  } else if (outerEnv) {
+    return outerEnv->Get(name);
   } else {
     return {.obj = nullptr, .ok = false};
   }
 }
+
 void Environment::Set(const std::string &name,
                       std::shared_ptr<Object::IObject> obj) {
   this->m_environment[name] = std::move(obj);
@@ -113,6 +114,7 @@ ObjectType String::Type() const { return ObjectType::STRING_OBJ; }
 std::string String::Inspect() const { return m_value; }
 
 // BuiltinFunction object
-ObjectType Builtin::Type() const { return ObjectType::BOOLEAN_OBJ; }
+Builtin::Builtin(BuiltinFunction fn) : m_fn(std::move(fn)) {}
+ObjectType Builtin::Type() const { return ObjectType::BUILTIN_OBJ; }
 std::string Builtin::Inspect() const { return "builtin function"; }
 } // namespace Object
