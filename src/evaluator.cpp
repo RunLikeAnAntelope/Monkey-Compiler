@@ -5,6 +5,7 @@
 #include "token.hpp"
 #include <cassert>
 #include <format>
+#include <iostream>
 #include <memory>
 #include <vector>
 namespace Evaluator {
