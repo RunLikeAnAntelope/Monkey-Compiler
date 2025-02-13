@@ -94,6 +94,14 @@ Token::Token Lexer::NextToken() {
     tok.Type = Token::STRING;
     tok.Literal = readString();
     break;
+  case '[':
+    tok.Type = Token::LBRACKET;
+    tok.Literal = m_ch;
+    break;
+  case ']':
+    tok.Type = Token::RBRACKET;
+    tok.Literal = m_ch;
+    break;
   default:
     if (isLetter(m_ch)) {
       tok.Literal = readIdentifier();

@@ -1,5 +1,6 @@
 #include "parser.hpp"
 #include "ast.hpp"
+#include "iostream"
 #include "token.hpp"
 #include <memory>
 #include <stdexcept>
@@ -18,6 +19,7 @@ Parser::Parser(Lexer::Lexer &lexer) : m_l(lexer) {
   registerPrefix(Token::IF, &Parser::parseIfExpression);
   registerPrefix(Token::FUNCTION, &Parser::parseFunctionLiteral);
   registerPrefix(Token::STRING, &Parser::parseStringLiteral);
+  registerPrefix(Token::LBRACKET, &Parser::parseArrayLiteral);
 
   registerInfix(Token::PLUS, &Parser::parseInfixExpression);
   registerInfix(Token::MINUS, &Parser::parseInfixExpression);
@@ -28,6 +30,7 @@ Parser::Parser(Lexer::Lexer &lexer) : m_l(lexer) {
   registerInfix(Token::LT, &Parser::parseInfixExpression);
   registerInfix(Token::GT, &Parser::parseInfixExpression);
   registerInfix(Token::LPAREN, &Parser::parseCallExpression);
+  registerInfix(Token::LBRACKET, &Parser::parseIndexExpression);
 }
 
 void Parser::nextToken() {
@@ -264,31 +267,49 @@ std::unique_ptr<Ast::IExpression>
 Parser::parseCallExpression(std::unique_ptr<Ast::IExpression> function) {
   auto exp =
     std::make_unique<Ast::CallExpression>(m_curToken, std::move(function));
-  exp->m_arguments = parseCallArguments();
+  exp->m_arguments = parseExpressionList(Token::RPAREN);
   return exp;
-}
-
-std::vector<std::unique_ptr<Ast::IExpression>> Parser::parseCallArguments() {
-  std::vector<std::unique_ptr<Ast::IExpression>> args;
-  if (peekTokenIs(Token::RPAREN)) {
-    nextToken();
-    return args;
-  }
-  nextToken();
-  args.push_back(parseExpression(LOWEST));
-  while (peekTokenIs(Token::COMMA)) {
-    nextToken();
-    nextToken();
-    args.push_back(parseExpression(LOWEST));
-  }
-  if (!expectPeek(Token::RPAREN)) {
-    malformedFunctionCallArgumentsListError();
-  }
-  return args;
 }
 
 std::unique_ptr<Ast::IExpression> Parser::parseStringLiteral() {
   return make_unique<Ast::StringLiteral>(m_curToken, m_curToken.Literal);
+}
+
+std::unique_ptr<Ast::IExpression> Parser::parseArrayLiteral() {
+  auto array = std::make_unique<Ast::ArrayLiteral>(m_curToken);
+  array->m_elements = parseExpressionList(Token::RBRACKET);
+  return array;
+}
+
+std::vector<std::unique_ptr<Ast::IExpression>>
+Parser::parseExpressionList(Token::TokenType end) {
+  std::vector<std::unique_ptr<Ast::IExpression>> list;
+  if (peekTokenIs(end)) {
+    nextToken();
+    return list;
+  }
+  nextToken();
+  list.push_back(parseExpression(LOWEST));
+  while (peekTokenIs(Token::COMMA)) {
+    nextToken();
+    nextToken();
+    list.push_back(parseExpression(LOWEST));
+  }
+  if (!expectPeek(end)) {
+    malformedExpressionListError();
+  }
+  return list;
+}
+
+std::unique_ptr<Ast::IExpression>
+Parser::parseIndexExpression(std::unique_ptr<Ast::IExpression> left) {
+  auto exp = make_unique<Ast::IndexExpression>(m_curToken, std::move(left));
+  nextToken();
+  exp->m_index = parseExpression(LOWEST);
+  if (!expectPeek(Token::RBRACKET)) {
+    return nullptr;
+  }
+  return exp;
 }
 void Parser::registerPrefix(Token::TokenType tokenType, prefixParseFn fn) {
   m_prefixParseFns[tokenType] = fn;
@@ -353,8 +374,8 @@ void Parser::malformedFunctionParameterListError() {
   m_errors.emplace_back("Malformed Function Parameter List Error.");
 }
 
-void Parser::malformedFunctionCallArgumentsListError() {
-  m_errors.emplace_back("Malformed Function Parameter List Error.");
+void Parser::malformedExpressionListError() {
+  m_errors.emplace_back("Malformed expression list error.");
 }
 
 } // namespace Parser

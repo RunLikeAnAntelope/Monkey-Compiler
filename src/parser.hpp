@@ -13,7 +13,8 @@ enum Precedence : std::uint8_t {
   SUM,
   PRODUCT,
   PREFIX,
-  CALL
+  CALL,
+  INDEX
 };
 
 const std::unordered_map<Token::TokenType, Precedence> precedences = {
@@ -21,7 +22,7 @@ const std::unordered_map<Token::TokenType, Precedence> precedences = {
   {Token::LT, LESSGREATER}, {Token::GT, LESSGREATER},
   {Token::PLUS, SUM},       {Token::MINUS, SUM},
   {Token::SLASH, PRODUCT},  {Token::ASTERISK, PRODUCT},
-  {Token::LPAREN, CALL}};
+  {Token::LPAREN, CALL},    {Token::LBRACKET, INDEX}};
 
 struct Parser {
   using prefixParseFn = std::unique_ptr<Ast::IExpression> (Parser::*)();
@@ -57,8 +58,12 @@ struct Parser {
   std::vector<std::unique_ptr<Ast::Identifier>> parseFunctionParameters();
   std::unique_ptr<Ast::IExpression>
   parseCallExpression(std::unique_ptr<Ast::IExpression> function);
-  std::vector<std::unique_ptr<Ast::IExpression>> parseCallArguments();
   std::unique_ptr<Ast::IExpression> parseStringLiteral();
+  std::unique_ptr<Ast::IExpression> parseArrayLiteral();
+  std::vector<std::unique_ptr<Ast::IExpression>>
+  parseExpressionList(Token::TokenType end);
+  std::unique_ptr<Ast::IExpression>
+  parseIndexExpression(std::unique_ptr<Ast::IExpression> left);
 
   void registerPrefix(Token::TokenType tokenType, prefixParseFn fn);
   void registerInfix(Token::TokenType, infixParseFn fn);
@@ -74,7 +79,7 @@ struct Parser {
   void peekError(Token::TokenType t);
   void noPrefixParseFnError(Token::TokenType t);
   void malformedFunctionParameterListError();
-  void malformedFunctionCallArgumentsListError();
+  void malformedExpressionListError();
 };
 
 } // namespace Parser

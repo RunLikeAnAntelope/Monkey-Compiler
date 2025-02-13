@@ -22,6 +22,8 @@ Type ExpressionStatement::Type() { return Type::EXPRESSION_STATEMENT; }
 Type FunctionLiteral::Type() { return Type::FUNCTION_LITERAL; }
 Type CallExpression::Type() { return Type::CALL_EXPRESSION; }
 Type StringLiteral::Type() { return Type::STRING_LITERAL; }
+Type ArrayLiteral::Type() { return Type::ARRAY_LITERAL; }
+Type IndexExpression::Type() { return Type::INDEX_EXPRESSION; }
 
 // Program stuff
 std::string Program::TokenLiteral() {
@@ -213,10 +215,40 @@ std::string CallExpression::String() {
 std::string CallExpression::TokenLiteral() { return m_token.Literal; }
 
 // String Expression stuff
-
 StringLiteral::StringLiteral(Token::Token token, std::string value)
   : m_token(std::move(token)), m_value(std::move(value)) {}
 std::string StringLiteral::TokenLiteral() { return this->m_token.Literal; }
 std::string StringLiteral::String() { return this->m_token.Literal; }
 
+// ArrayLiteral stuff
+ArrayLiteral::ArrayLiteral(Token::Token token) : m_token(std::move(token)) {}
+std::string ArrayLiteral::TokenLiteral() { return this->m_token.Literal; }
+std::string ArrayLiteral::String() {
+  std::string out;
+  std::vector<std::string> elements;
+  elements.reserve(this->m_elements.size());
+  for (auto &str : this->m_elements) {
+    elements.push_back(str->String());
+  }
+  out.append("[");
+  out.append(Helpers::combineVecStrWithDelim(elements, ", "));
+  out.append("]");
+  return out;
+}
+
+// IndexExpression Stuff
+
+IndexExpression::IndexExpression(Token::Token token,
+                                 std::unique_ptr<IExpression> left)
+  : m_token(std::move(token)), m_index(std::move(left)) {}
+std::string IndexExpression::TokenLiteral() { return this->m_token.Literal; }
+std::string IndexExpression::String() {
+  std::string out;
+  out.append("(");
+  out.append(this->m_left.get()->String());
+  out.append("[");
+  out.append(this->m_index.get()->String());
+  out.append("])");
+  return out;
+}
 } // namespace Ast

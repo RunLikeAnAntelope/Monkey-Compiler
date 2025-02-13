@@ -23,7 +23,9 @@ enum class Type : std::uint8_t {
   EXPRESSION_STATEMENT,
   FUNCTION_LITERAL,
   CALL_EXPRESSION,
-  STRING_LITERAL
+  STRING_LITERAL,
+  ARRAY_LITERAL,
+  INDEX_EXPRESSION
 };
 
 struct INode {
@@ -204,6 +206,30 @@ struct StringLiteral : public IExpression {
   std::string m_value;
 
   explicit StringLiteral(Token::Token token, std::string m_value);
+  void expressionNode() override {};
+  std::string TokenLiteral() override;
+  std::string String() override;
+  enum Type Type() override;
+};
+
+struct ArrayLiteral : public IExpression {
+  Token::Token m_token;
+  std::vector<std::unique_ptr<IExpression>> m_elements;
+
+  explicit ArrayLiteral(Token::Token token);
+  void expressionNode() override {};
+  std::string TokenLiteral() override;
+  std::string String() override;
+  enum Type Type() override;
+};
+
+struct IndexExpression : public IExpression {
+  Token::Token m_token;
+  std::unique_ptr<IExpression> m_left;
+  std::unique_ptr<IExpression> m_index;
+
+  explicit IndexExpression(Token::Token token,
+                           std::unique_ptr<Ast::IExpression> left);
   void expressionNode() override {};
   std::string TokenLiteral() override;
   std::string String() override;

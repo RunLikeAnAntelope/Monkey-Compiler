@@ -480,6 +480,14 @@ TEST(Parser, OperatorPrecedenceParsing) {
       .input = "add(a + b + c * d / f + g)",
       .expected = "add((((a + b) + ((c * d) / f)) + g))",
     },
+    {
+      .input = "a * [1, 2, 3, 4][b * c] * d",
+      .expected = "((a * ([1, 2, 3, 4][(b * c)])) * d)",
+    },
+    {
+      .input = "add(a * b[2], b[1], 2 * [1, 2][1])",
+      .expected = "add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))",
+    },
   };
 
   for (const auto &test : tests) {
@@ -717,4 +725,48 @@ TEST(Parser, TestStringLiteral) {
   auto literal = dynamic_cast<Ast::StringLiteral *>(stmt->m_expression.get());
   ASSERT_EQ(literal->m_value, "hello world") << std::format(
     "literal.m_value not {}, got={}", "hello world", literal->m_value);
+}
+
+TEST(Parser, TestArrayLiterals) {
+  std::string input = "[1, 2*2, 3+3]";
+  Lexer::Lexer l(input);
+  Parser::Parser p(l);
+  Ast::Program program = p.ParseProgram();
+  checkParserErrors(p);
+
+  auto stmt =
+    dynamic_cast<Ast::ExpressionStatement *>(program.m_statements[0].get());
+  ASSERT_TRUE(stmt != nullptr) << "Statement is not an ExpressionStatement";
+
+  ASSERT_EQ(stmt->m_expression->Type(), Ast::Type::ARRAY_LITERAL)
+    << "exp not an ARRAY_LITERAL";
+
+  auto *literal = dynamic_cast<Ast::ArrayLiteral *>(stmt->m_expression.get());
+
+  ASSERT_EQ(std::ssize(literal->m_elements), 3)
+    << "length of m_elements not 3, got=" << std::ssize(literal->m_elements);
+
+  testIntegerLiteral(*literal->m_elements[0].get(), 1);
+  testInfixExpression(literal->m_elements[1].get(), 2, "*", 2);
+  testInfixExpression(literal->m_elements[2].get(), 3, "+", 3);
+}
+
+TEST(Parser, TestParsingIndexExpressions) {
+  std::string input = "myArray[1+1]";
+  Lexer::Lexer l(input);
+  Parser::Parser p(l);
+  Ast::Program program = p.ParseProgram();
+  checkParserErrors(p);
+
+  auto stmt =
+    dynamic_cast<Ast::ExpressionStatement *>(program.m_statements[0].get());
+  ASSERT_TRUE(stmt != nullptr) << "Statement is not an ExpressionStatement";
+
+  ASSERT_EQ(stmt->m_expression->Type(), Ast::Type::INDEX_EXPRESSION)
+    << "exp not an INDEX_EXPRESSION";
+
+  auto *literal =
+    dynamic_cast<Ast::IndexExpression *>(stmt->m_expression.get());
+  testIdentifier(*literal->m_left.get(), "myArray");
+  testInfixExpression(literal->m_index.get(), 1, "+", 1);
 }

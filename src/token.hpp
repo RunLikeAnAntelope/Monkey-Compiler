@@ -34,7 +34,9 @@ enum TokenType {
   IF,
   ELSE,
   RETURN,
-  STRING
+  STRING,
+  LBRACKET,
+  RBRACKET
 };
 
 struct Token {
@@ -82,7 +84,9 @@ const std::vector<StringTok> strToTok = {{.Str = "ILLEGAL", .Type = ILLEGAL},
                                          {.Str = "IF", .Type = IF},
                                          {.Str = "ELSE", .Type = ELSE},
                                          {.Str = "RETURN", .Type = RETURN},
-                                         {.Str = "STRING", .Type = STRING}};
+                                         {.Str = "STRING", .Type = STRING},
+                                         {.Str = "[", .Type = LBRACKET},
+                                         {.Str = "]", .Type = RBRACE}};
 
 std::unordered_map<std::string, TokenType> vecToTokenMap();
 std::unordered_map<TokenType, std::string> vecToTokenStringMap();

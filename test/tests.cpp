@@ -89,6 +89,12 @@ TEST(TestNextToken, Works) {
     Test{.expectedToken = Token::STRING, .expectedLiteral = "foo\\bar"},
     Test{.expectedToken = Token::STRING, .expectedLiteral = "foo\nbar"},
     Test{.expectedToken = Token::STRING, .expectedLiteral = "foo\tbar"},
+    Test{.expectedToken = Token::LBRACKET, .expectedLiteral = "["},
+    Test{.expectedToken = Token::INT, .expectedLiteral = "1"},
+    Test{.expectedToken = Token::COMMA, .expectedLiteral = ","},
+    Test{.expectedToken = Token::INT, .expectedLiteral = "2"},
+    Test{.expectedToken = Token::RBRACKET, .expectedLiteral = "]"},
+    Test{.expectedToken = Token::SEMICOLON, .expectedLiteral = ";"},
 
     Test{.expectedToken = Token::EOF_, .expectedLiteral = ""}};
 
@@ -112,7 +118,8 @@ TEST(TestNextToken, Works) {
                       "\"foo\\\"bar\""
                       "\"foo\\bar\""
                       "\"foo\\nbar\""
-                      "\"foo\\tbar\"";
+                      "\"foo\\tbar\""
+                      "[1, 2];";
   Lexer::Lexer l(input);
   Token::Token tok{};
   for (unsigned int i = 1; const auto &test : tests) {
