@@ -240,7 +240,7 @@ std::string ArrayLiteral::String() {
 
 IndexExpression::IndexExpression(Token::Token token,
                                  std::unique_ptr<IExpression> left)
-  : m_token(std::move(token)), m_index(std::move(left)) {}
+  : m_token(std::move(token)), m_left(std::move(left)) {}
 std::string IndexExpression::TokenLiteral() { return this->m_token.Literal; }
 std::string IndexExpression::String() {
   std::string out;
