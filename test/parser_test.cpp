@@ -188,9 +188,10 @@ TEST(Parser, ReturnStatements) {
     variant expectedValue;
   };
 
-  std::vector<test> tests = {{.input = "return 5;", .expectedValue = 5},
-                             {.input = "return true;", .expectedValue = true},
-                             {"return foobar;", "foobar"}};
+  std::vector<test> tests = {
+    {.input = "return 5;", .expectedValue = 5},
+    {.input = "return true;", .expectedValue = true},
+    {.input = "return foobar;", .expectedValue = "foobar"}};
 
   for (const auto &tst : tests) {
     Lexer::Lexer l(tst.input);
@@ -769,4 +770,25 @@ TEST(Parser, TestParsingIndexExpressions) {
     dynamic_cast<Ast::IndexExpression *>(stmt->m_expression.get());
   testIdentifier(*literal->m_left.get(), "myArray");
   testInfixExpression(literal->m_index.get(), 1, "+", 1);
+}
+
+TEST(Parser, ParsingHashLiterals) {
+  std::string input = "{\"one\": 1, \"two\": 2, \"three\": 3}";
+  Lexer::Lexer l(input);
+  Parser::Parser p(l);
+  Ast::Program program = p.ParseProgram();
+  checkParserErrors(p);
+
+  auto stmt =
+    dynamic_cast<Ast::ExpressionStatement *>(program.m_statements[0].get());
+  ASSERT_TRUE(stmt != nullptr) << "Statement is not an ExpressionStatement";
+
+  ASSERT_EQ(stmt->m_expression->Type(), Ast::Type::HASH_EXPRESSION)
+    << "exp not an HASH_EXPRESSION";
+
+  auto *hash = dynamic_cast<Ast::HashLiteral *>(stmt->m_expression.get());
+  ASSERT_EQ(std::ssize(hash->m_pairs), 3)
+    << "hash.Pairs length should be 3, got=" << std::ssize(hash->m_pairs);
+  // TODO: figure out why unordered_map not working
+  std::unordered_map<std::string, int> = {{"one", 1}, {"two", 2}, {"three", 3}};
 }

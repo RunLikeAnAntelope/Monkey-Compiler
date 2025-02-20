@@ -1,5 +1,6 @@
 #include "ast.hpp"
 #include "helpers.hpp"
+#include <format>
 #include <memory>
 #include <utility>
 
@@ -237,7 +238,6 @@ std::string ArrayLiteral::String() {
 }
 
 // IndexExpression Stuff
-
 IndexExpression::IndexExpression(Token::Token token,
                                  std::unique_ptr<IExpression> left)
   : m_token(std::move(token)), m_left(std::move(left)) {}
@@ -249,6 +249,23 @@ std::string IndexExpression::String() {
   out.append("[");
   out.append(this->m_index.get()->String());
   out.append("])");
+  return out;
+}
+
+// Hash Stuff
+std::string HashLiteral::TokenLiteral() { return this->m_token.Literal; };
+std::string HashLiteral::String() {
+  std::string out;
+  std::vector<std::string> pairs;
+  pairs.reserve(this->m_pairs.size());
+  for (const auto &pair : this->m_pairs) {
+    pairs.emplace_back(std::format("{}:{}", pair.first.get()->String(),
+                                   pair.second.get()->String()));
+  }
+
+  out.append("{");
+  out.append(Helpers::combineVecStrWithDelim(pairs, ","));
+  out.append("}");
   return out;
 }
 } // namespace Ast

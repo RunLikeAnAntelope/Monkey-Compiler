@@ -2,6 +2,7 @@
 #include "token.hpp"
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace Ast {
@@ -25,7 +26,8 @@ enum class Type : std::uint8_t {
   CALL_EXPRESSION,
   STRING_LITERAL,
   ARRAY_LITERAL,
-  INDEX_EXPRESSION
+  INDEX_EXPRESSION,
+  HASH_EXPRESSION
 };
 
 struct INode {
@@ -230,6 +232,17 @@ struct IndexExpression : public IExpression {
 
   explicit IndexExpression(Token::Token token,
                            std::unique_ptr<Ast::IExpression> left);
+  void expressionNode() override {};
+  std::string TokenLiteral() override;
+  std::string String() override;
+  enum Type Type() override;
+};
+
+struct HashLiteral : public IExpression {
+  Token::Token m_token;
+  std::unordered_map<std::unique_ptr<IExpression>, std::unique_ptr<IExpression>>
+    m_pairs;
+
   void expressionNode() override {};
   std::string TokenLiteral() override;
   std::string String() override;

@@ -95,7 +95,11 @@ TEST(TestNextToken, Works) {
     Test{.expectedToken = Token::INT, .expectedLiteral = "2"},
     Test{.expectedToken = Token::RBRACKET, .expectedLiteral = "]"},
     Test{.expectedToken = Token::SEMICOLON, .expectedLiteral = ";"},
-
+    Test{.expectedToken = Token::LBRACE, .expectedLiteral = "{"},
+    Test{.expectedToken = Token::STRING, .expectedLiteral = "foo"},
+    Test{.expectedToken = Token::COLON, .expectedLiteral = ":"},
+    Test{.expectedToken = Token::STRING, .expectedLiteral = "bar"},
+    Test{.expectedToken = Token::RBRACE, .expectedLiteral = "}"},
     Test{.expectedToken = Token::EOF_, .expectedLiteral = ""}};
 
   std::string input = "let five = 5;\n"
@@ -119,7 +123,8 @@ TEST(TestNextToken, Works) {
                       "\"foo\\bar\""
                       "\"foo\\nbar\""
                       "\"foo\\tbar\""
-                      "[1, 2];";
+                      "[1, 2];"
+                      "{\"foo\": \"bar\"}";
   Lexer::Lexer l(input);
   Token::Token tok{};
   for (unsigned int i = 1; const auto &test : tests) {

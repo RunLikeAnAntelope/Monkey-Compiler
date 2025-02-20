@@ -102,6 +102,10 @@ Token::Token Lexer::NextToken() {
     tok.Type = Token::RBRACKET;
     tok.Literal = m_ch;
     break;
+  case ':':
+    tok.Type = Token::COLON;
+    tok.Literal = m_ch;
+    break;
   default:
     if (isLetter(m_ch)) {
       tok.Literal = readIdentifier();
