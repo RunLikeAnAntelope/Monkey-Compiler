@@ -6,6 +6,9 @@
 #include <vector>
 namespace Evaluator {
 
+extern std::shared_ptr<Object::Null> NULL_O;
+extern std::shared_ptr<Object::Boolean> TRUE;
+extern std::shared_ptr<Object::Boolean> FALSE;
 class Evaluator {
 public:
   std::shared_ptr<Object::IObject>
@@ -75,6 +78,14 @@ private:
   static std::shared_ptr<Object::IObject>
   evalIdentifier(Ast::INode *node,
                  const std::shared_ptr<Object::Environment> &env);
+
+  static std::shared_ptr<Object::IObject>
+  evalIndexExpression(const std::shared_ptr<Object::IObject> &left,
+                      const std::shared_ptr<Object::IObject> &index);
+
+  static std::shared_ptr<Object::IObject>
+  evalArrayIndexExpression(const std::shared_ptr<Object::IObject> &array,
+                           const std::shared_ptr<Object::IObject> &index);
 };
 
 } // namespace Evaluator

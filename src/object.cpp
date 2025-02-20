@@ -26,6 +26,8 @@ std::string objectTypeToStr(ObjectType type) {
     return "STRING";
   case Object::ObjectType::BUILTIN_OBJ:
     return "BUILTIN";
+  case Object::ObjectType::ARRAY_OBJ:
+    return "ARRAY";
   }
 }
 
@@ -112,6 +114,24 @@ std::string Function::Inspect() const {
 String::String(std::string value) : m_value(std::move(value)) {}
 ObjectType String::Type() const { return ObjectType::STRING_OBJ; }
 std::string String::Inspect() const { return m_value; }
+
+// Array object
+
+Array::Array(std::vector<std::shared_ptr<IObject>> elements)
+  : m_elements(std::move(elements)) {}
+ObjectType Array::Type() const { return ObjectType::ARRAY_OBJ; }
+std::string Array::Inspect() const {
+  std::string out;
+  std::vector<std::string> elements;
+  elements.reserve(this->m_elements.size());
+  for (const auto &p : this->m_elements) {
+    elements.emplace_back(p->Inspect());
+  }
+  out.append("[");
+  out.append(Helpers::combineVecStrWithDelim(elements, ","));
+  out.append("]");
+  return out;
+}
 
 // BuiltinFunction object
 Builtin::Builtin(BuiltinFunction fn) : m_fn(std::move(fn)) {}

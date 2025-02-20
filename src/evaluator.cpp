@@ -9,11 +9,10 @@
 #include <memory>
 #include <vector>
 namespace Evaluator {
-static std::shared_ptr<Object::Boolean> FALSE =
+std::shared_ptr<Object::Boolean> FALSE =
   std::make_shared<Object::Boolean>(false);
-static std::shared_ptr<Object::Boolean> TRUE =
-  std::make_shared<Object::Boolean>(true);
-static std::shared_ptr<Object::Null> NULL_O = std::make_shared<Object::Null>();
+std::shared_ptr<Object::Boolean> TRUE = std::make_shared<Object::Boolean>(true);
+std::shared_ptr<Object::Null> NULL_O = std::make_shared<Object::Null>();
 
 static std::shared_ptr<Object::Boolean> nativeBoolToBoolObject(bool boolean) {
   return boolean ? TRUE : FALSE;
@@ -114,6 +113,26 @@ Evaluator::Eval(Ast::INode *node,
   case Ast::Type::STRING_LITERAL: {
     auto *strLit = dynamic_cast<Ast::StringLiteral *>(node);
     return std::make_shared<Object::String>(strLit->m_value);
+  }
+  case Ast::Type::ARRAY_LITERAL: {
+    auto *arrLit = dynamic_cast<Ast::ArrayLiteral *>(node);
+    auto elements = evalExpressions(arrLit->m_elements, env);
+    if (std::ssize(elements) == 1 && isError(elements[0].get())) {
+      return elements[1];
+    }
+    return std::make_shared<Object::Array>(elements);
+  }
+  case Ast::Type::INDEX_EXPRESSION: {
+    auto *idxExp = dynamic_cast<Ast::IndexExpression *>(node);
+    auto left = Eval(idxExp->m_left.get(), env);
+    if (isError(left.get())) {
+      return left;
+    }
+    auto index = Eval(idxExp->m_index.get(), env);
+    if (isError(index.get())) {
+      return index;
+    }
+    return evalIndexExpression(left, index);
   }
 
   default:
@@ -417,6 +436,30 @@ Evaluator::evalIdentifier(Ast::INode *node,
     return Builtins::builtins[ident->m_value];
   }
   return newError(std::format("identifier not found: {}", ident->m_value));
+}
+
+std::shared_ptr<Object::IObject>
+Evaluator::evalIndexExpression(const std::shared_ptr<Object::IObject> &left,
+                               const std::shared_ptr<Object::IObject> &index) {
+  if (left->Type() == Object::ObjectType::ARRAY_OBJ &&
+      index->Type() == Object::ObjectType::INTEGER_OBJ) {
+    return evalArrayIndexExpression(left, index);
+  }
+  // if none of the above are true return an error
+  return newError("index operator not supported: " +
+                  Object::objectTypeToStr(left->Type()));
+}
+
+std::shared_ptr<Object::IObject> Evaluator::evalArrayIndexExpression(
+  const std::shared_ptr<Object::IObject> &array,
+  const std::shared_ptr<Object::IObject> &index) {
+  auto arrObj = dynamic_cast<Object::Array *>(array.get());
+  auto idx = dynamic_cast<Object::Integer *>(index.get())->m_value;
+  auto max = std::ssize(arrObj->m_elements) - 1;
+  if (idx < 0 || idx > max) {
+    return NULL_O;
+  }
+  return arrObj->m_elements[static_cast<size_t>(idx)];
 }
 
 } // namespace Evaluator

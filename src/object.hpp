@@ -14,7 +14,8 @@ enum class ObjectType : std::uint8_t {
   ERROR_OBJ,
   FUNCTION_OBJ,
   STRING_OBJ,
-  BUILTIN_OBJ
+  BUILTIN_OBJ,
+  ARRAY_OBJ
 };
 std::string objectTypeToStr(ObjectType type);
 struct IObject {
@@ -88,6 +89,14 @@ struct Function : public IObject {
 struct String : public IObject {
   std::string m_value;
   explicit String(std::string value);
+  [[nodiscard]] ObjectType Type() const override;
+  [[nodiscard]] std::string Inspect() const override;
+};
+
+struct Array : public IObject {
+  std::vector<std::shared_ptr<IObject>> m_elements;
+
+  explicit Array(std::vector<std::shared_ptr<IObject>> elements);
   [[nodiscard]] ObjectType Type() const override;
   [[nodiscard]] std::string Inspect() const override;
 };

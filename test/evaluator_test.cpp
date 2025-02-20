@@ -386,3 +386,76 @@ TEST(Evaluator, BuiltInLen) {
     }
   }
 }
+
+TEST(Evaluator, ArrayLiterals) {
+  std::string input = "[1, 2 * 2, 3 + 3]";
+  auto evaluated = testEval(input);
+  auto *arr = dynamic_cast<Object::Array *>(evaluated.get());
+  ASSERT_NE(nullptr, arr) << std::format(
+    "object is not a array, got={}",
+    Object::objectTypeToStr(evaluated.get()->Type()));
+  ASSERT_EQ(std::ssize(arr->m_elements), 3)
+    << "array has wrong num of elements. got=" << std::ssize(arr->m_elements);
+  testIntegerObject(arr->m_elements[0].get(), 1);
+  testIntegerObject(arr->m_elements[1].get(), 4);
+  testIntegerObject(arr->m_elements[2].get(), 6);
+}
+
+TEST(Evaluator, IndexExpressions) {
+  struct test {
+    const std::string input;
+    const variant expected;
+  };
+  std::vector<test> tests = {
+    {
+      .input = "[1, 2, 3][0]",
+      .expected = 1,
+    },
+    {
+      .input = "[1, 2, 3][1]",
+      .expected = 2,
+    },
+    {
+      .input = "[1, 2, 3][2]",
+      .expected = 3,
+    },
+    {
+      .input = "let i = 0; [1][i];",
+      .expected = 1,
+    },
+    {
+      .input = "[1, 2, 3][1 + 1];",
+      .expected = 3,
+    },
+    {
+      .input = "let myArray = [1, 2, 3]; myArray[2];",
+      .expected = 3,
+    },
+    {
+      .input = "let myArray = [1, 2, 3]; myArray[0] + myArray[1] + myArray[2];",
+      .expected = 6,
+    },
+    {
+      .input = "let myArray = [1, 2, 3]; let i = myArray[0]; myArray[i]",
+      .expected = 2,
+    },
+    {
+      .input = "[1, 2, 3][3]",
+      .expected = std::monostate{},
+    },
+    {
+      .input = "[1, 2, 3][-1]",
+      .expected = std::monostate{},
+    }};
+  for (const auto &tst : tests) {
+    auto evaluated = testEval(tst.input);
+    auto *evaluated_ptr = evaluated.get();
+    if (std::holds_alternative<long int>(tst.expected)) {
+      auto intObj = dynamic_cast<Object::Integer *>(evaluated_ptr);
+      ASSERT_NE(intObj, nullptr) << "Object type is not an integer";
+      testIntegerObject(evaluated_ptr, std::get<long int>(tst.expected));
+    } else {
+      testNullObject(evaluated_ptr);
+    }
+  }
+}
