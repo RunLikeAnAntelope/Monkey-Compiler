@@ -64,7 +64,7 @@ struct Parser {
   parseExpressionList(Token::TokenType end);
   std::unique_ptr<Ast::IExpression>
   parseIndexExpression(std::unique_ptr<Ast::IExpression> left);
-
+  std::unique_ptr<Ast::IExpression> ParseHashLiteral();
   void registerPrefix(Token::TokenType tokenType, prefixParseFn fn);
   void registerInfix(Token::TokenType, infixParseFn fn);
 

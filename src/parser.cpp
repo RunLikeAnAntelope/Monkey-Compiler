@@ -20,6 +20,7 @@ Parser::Parser(Lexer::Lexer &lexer) : m_l(lexer) {
   registerPrefix(Token::FUNCTION, &Parser::parseFunctionLiteral);
   registerPrefix(Token::STRING, &Parser::parseStringLiteral);
   registerPrefix(Token::LBRACKET, &Parser::parseArrayLiteral);
+  registerPrefix(Token::LBRACE, &Parser::ParseHashLiteral);
 
   registerInfix(Token::PLUS, &Parser::parseInfixExpression);
   registerInfix(Token::MINUS, &Parser::parseInfixExpression);
@@ -310,6 +311,37 @@ Parser::parseIndexExpression(std::unique_ptr<Ast::IExpression> left) {
     return nullptr;
   }
   return exp;
+}
+
+std::unique_ptr<Ast::IExpression> Parser::ParseHashLiteral() {
+  auto hash = std::make_unique<Ast::HashLiteral>(m_curToken);
+  hash->m_pairs = std::unordered_map<std::unique_ptr<Ast::IExpression>,
+                                     std::unique_ptr<Ast::IExpression>>{};
+  while (peekTokenIs(Token::RBRACE) == false) {
+    nextToken();
+    auto key = parseExpression(LOWEST);
+    if (expectPeek(Token::COLON) == false) {
+
+      std::cout << "3" << std::endl;
+      return nullptr;
+    }
+    nextToken();
+    auto value = parseExpression(LOWEST);
+    hash->m_pairs[std::move(key)] = std::move(value);
+    if (peekTokenIs(Token::RBRACE) == false &&
+        expectPeek(Token::COMMA) == false) {
+
+      std::cout << "2" << std::endl;
+      return nullptr;
+    }
+  }
+  if (expectPeek(Token::RBRACE) == false) {
+
+    std::cout << "1" << std::endl;
+    return nullptr;
+  }
+  std::cout << "0" << std::endl;
+  return hash;
 }
 void Parser::registerPrefix(Token::TokenType tokenType, prefixParseFn fn) {
   m_prefixParseFns[tokenType] = fn;

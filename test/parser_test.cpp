@@ -7,6 +7,7 @@
 #include <gtest/gtest.h>
 #include <iterator>
 #include <memory>
+#include <unordered_map>
 #include <utility>
 
 using Common::variant;
@@ -782,13 +783,42 @@ TEST(Parser, ParsingHashLiterals) {
   auto stmt =
     dynamic_cast<Ast::ExpressionStatement *>(program.m_statements[0].get());
   ASSERT_TRUE(stmt != nullptr) << "Statement is not an ExpressionStatement";
+  auto x = stmt->m_expression->Type();
 
   ASSERT_EQ(stmt->m_expression->Type(), Ast::Type::HASH_EXPRESSION)
     << "exp not an HASH_EXPRESSION";
-
   auto *hash = dynamic_cast<Ast::HashLiteral *>(stmt->m_expression.get());
   ASSERT_EQ(std::ssize(hash->m_pairs), 3)
     << "hash.Pairs length should be 3, got=" << std::ssize(hash->m_pairs);
-  // TODO: figure out why unordered_map not working
-  std::unordered_map<std::string, int> = {{"one", 1}, {"two", 2}, {"three", 3}};
+
+  std::unordered_map<std::string, long int> expected = {
+    {"one", 1}, {"two", 2}, {"three", 3}};
+  for (const auto &pair : hash->m_pairs) {
+    ASSERT_EQ(pair.first.get()->Type(), Ast::Type::STRING_LITERAL)
+      << "expected STRING_LITERAL";
+    ASSERT_EQ(pair.second.get()->Type(), Ast::Type::INTEGER_LITERAL)
+      << "expected INTEGER_LITERAL";
+
+    auto key = dynamic_cast<Ast::StringLiteral *>(pair.first.get());
+    auto value = expected[key->m_value];
+    testIntegerLiteral(*pair.second.get(), value);
+  }
+}
+
+TEST(Parser, ParsingEmptyHashLiterals) {
+  std::string input = "{}";
+  Lexer::Lexer l(input);
+  Parser::Parser p(l);
+  Ast::Program program = p.ParseProgram();
+  checkParserErrors(p);
+
+  auto stmt =
+    dynamic_cast<Ast::ExpressionStatement *>(program.m_statements[0].get());
+  ASSERT_TRUE(stmt != nullptr) << "Statement is not an ExpressionStatement";
+
+  ASSERT_EQ(stmt->m_expression->Type(), Ast::Type::HASH_EXPRESSION)
+    << "exp not an HASH_EXPRESSION";
+  auto *hash = dynamic_cast<Ast::HashLiteral *>(stmt->m_expression.get());
+  ASSERT_EQ(std::ssize(hash->m_pairs), 0)
+    << "hash.Pairs length should be 3, got=" << std::ssize(hash->m_pairs);
 }

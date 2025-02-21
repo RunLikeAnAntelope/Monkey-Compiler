@@ -243,6 +243,7 @@ struct HashLiteral : public IExpression {
   std::unordered_map<std::unique_ptr<IExpression>, std::unique_ptr<IExpression>>
     m_pairs;
 
+  explicit HashLiteral(Token::Token token);
   void expressionNode() override {};
   std::string TokenLiteral() override;
   std::string String() override;

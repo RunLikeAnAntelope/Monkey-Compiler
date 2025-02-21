@@ -25,6 +25,7 @@ Type CallExpression::Type() { return Type::CALL_EXPRESSION; }
 Type StringLiteral::Type() { return Type::STRING_LITERAL; }
 Type ArrayLiteral::Type() { return Type::ARRAY_LITERAL; }
 Type IndexExpression::Type() { return Type::INDEX_EXPRESSION; }
+Type HashLiteral::Type() { return Type::HASH_EXPRESSION; }
 
 // Program stuff
 std::string Program::TokenLiteral() {
@@ -237,22 +238,8 @@ std::string ArrayLiteral::String() {
   return out;
 }
 
-// IndexExpression Stuff
-IndexExpression::IndexExpression(Token::Token token,
-                                 std::unique_ptr<IExpression> left)
-  : m_token(std::move(token)), m_left(std::move(left)) {}
-std::string IndexExpression::TokenLiteral() { return this->m_token.Literal; }
-std::string IndexExpression::String() {
-  std::string out;
-  out.append("(");
-  out.append(this->m_left.get()->String());
-  out.append("[");
-  out.append(this->m_index.get()->String());
-  out.append("])");
-  return out;
-}
-
 // Hash Stuff
+HashLiteral::HashLiteral(Token::Token token) : m_token(std::move(token)) {}
 std::string HashLiteral::TokenLiteral() { return this->m_token.Literal; };
 std::string HashLiteral::String() {
   std::string out;
@@ -266,6 +253,21 @@ std::string HashLiteral::String() {
   out.append("{");
   out.append(Helpers::combineVecStrWithDelim(pairs, ","));
   out.append("}");
+  return out;
+}
+
+// IndexExpression Stuff
+IndexExpression::IndexExpression(Token::Token token,
+                                 std::unique_ptr<IExpression> left)
+  : m_token(std::move(token)), m_left(std::move(left)) {}
+std::string IndexExpression::TokenLiteral() { return this->m_token.Literal; }
+std::string IndexExpression::String() {
+  std::string out;
+  out.append("(");
+  out.append(this->m_left.get()->String());
+  out.append("[");
+  out.append(this->m_index.get()->String());
+  out.append("])");
   return out;
 }
 } // namespace Ast
